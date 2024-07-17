@@ -11,6 +11,7 @@ import sim.explainer.library.framework.descriptiontree.BreadthFirstTreeIterator;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
 import sim.explainer.library.framework.PreferenceProfile;
+import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.util.TimeUtils;
 
 import java.math.BigDecimal;
@@ -52,7 +53,7 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected BigDecimal eHd(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eHd(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to ehd as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.DynamicProgrammingSimReasonerImpl_IllegalArguments);
         }
@@ -61,7 +62,7 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
             logger.debug("eHd - node1[" + node1.getData().toString() + "] node2[" + node2.getData().toString() + "].");
         }
 
-        BigDecimal gammaValue = gamma(node1.getEdgeToParent(), node2.getEdgeToParent());
+        BigDecimal gammaValue = gamma(record, node1.getEdgeToParent(), node2.getEdgeToParent());
 
         BigDecimal nu = this.preferenceProfile.getDefaultRoleDiscountFactor();
 
@@ -113,7 +114,9 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
                 for (int j = 0; list2 != null && j < list2.size(); j++) {
                     TreeNode<Set<String>> treeNode2 = list2.get(j);
 
-                    BigDecimal phd = phd(treeNode1, treeNode2);
+                    SimRecord record = new SimRecord();
+
+                    BigDecimal phd = phd(record, treeNode1, treeNode2);
 
                     if (i == heightTree1 - 1) {
 
@@ -122,6 +125,8 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
                         }
 
                         this.addNodePairHdValMap(treeNode1.getId(), treeNode2.getId(), phd);
+                        record.setDeg(phd);
+                        this.backtraceTable.addRecord(i, treeNode1, treeNode2, record);
                     }
 
                     else {
@@ -131,11 +136,13 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
                         }
 
                         BigDecimal mu = mu(treeNode1);
-                        BigDecimal eSetHd = eSetHd(treeNode1, treeNode2);
+                        BigDecimal eSetHd = eSetHd(i, record, treeNode1, treeNode2);
                         BigDecimal primitiveOperations = mu.multiply(phd);
                         BigDecimal edgeOperations = BigDecimal.ONE.subtract(mu).multiply(eSetHd);
                         BigDecimal hdVal = primitiveOperations.add(edgeOperations);
                         this.addNodePairHdValMap(treeNode1.getId(), treeNode2.getId(), hdVal);
+                        record.setDeg(hdVal);
+                        this.backtraceTable.addRecord(i, treeNode1, treeNode2, record);
                     }
 
                 }

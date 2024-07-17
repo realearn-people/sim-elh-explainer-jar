@@ -11,8 +11,10 @@ import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
+import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.framework.unfolding.IRoleUnfolder;
 import sim.explainer.library.framework.PreferenceProfile;
+import sim.explainer.library.util.MyStringUtils;
 import sim.explainer.library.util.TimeUtils;
 
 import javax.annotation.Resource;
@@ -44,17 +46,22 @@ public class TopDownSimReasonerImpl implements IReasoner {
     // Private /////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private BigDecimal measureDirectedSimilarity(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    private BigDecimal measureDirectedSimilarity(int level, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to measure directed similarity as node1[" +
                     node1 + "] and node2[" + node2 + "] are null." , ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
         }
 
+        SimRecord record = new SimRecord();
+
         BigDecimal mu = mu(node1);
 
-        BigDecimal primitiveOperations = mu.multiply(phd(node1, node2));
+        BigDecimal primitiveOperations = mu.multiply(phd(record, node1, node2));
 
-        BigDecimal edgeOperations = BigDecimal.ONE.subtract(mu).multiply(eSetHd(node1, node2));
+        BigDecimal edgeOperations = BigDecimal.ONE.subtract(mu).multiply(eSetHd(level, record, node1, node2));
+
+        record.setDeg(primitiveOperations.add(edgeOperations));
+        this.backtraceTable.addRecord(level, node1, node2, record);
 
         return primitiveOperations.add(edgeOperations);
     }
@@ -85,7 +92,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
     }
 
     // method to compute average of the best matching of primitive concepts
-    protected BigDecimal phd(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal phd(SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to phd as node1[" + node1 + "] and node2[" +
                     node2 + "] are null.", ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
@@ -103,12 +110,16 @@ public class TopDownSimReasonerImpl implements IReasoner {
             StringBuilder builder2 = new StringBuilder().append(node1.getData().size());
             BigDecimal divisor = new BigDecimal(builder2.toString());
 
+            for (String data: common) {
+                record.appendPri(data);
+            }
+
             return numerator.divide(divisor, 5, BigDecimal.ROUND_HALF_UP);
         }
     }
 
     // method to compute degree of potential homomorphism on a matching edge
-    protected BigDecimal eSetHd(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eSetHd(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to e-set-hd as node1[" + node1 + "] and node2[" +
                     node2 + "] are null.", ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
@@ -131,15 +142,26 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
             for (TreeNode<Set<String>> node1Child : node1Children) {
 
+                TreeNode<Set<String>> causeMaxExi2 = null;
+
                 BigDecimal max = BigDecimal.ZERO;
 
                 for (TreeNode<Set<String>> node2Child : node2Children) {
 
-                    BigDecimal ehdValue = eHd(node1Child, node2Child);
+                    BigDecimal ehdValue = eHd(level, record, node1Child, node2Child);
 
                     if (max.compareTo(ehdValue) < 0) {
                         max = ehdValue;
+                        causeMaxExi2 = node2Child;
                     }
+                }
+
+                // TODO - concept check
+                if (node1Child.equals(causeMaxExi2)) { // same concept
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                } else if (causeMaxExi2 != null) { // diff concept
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.toString()));
                 }
 
                 sum = sum.add(max);
@@ -152,7 +174,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
         }
     }
 
-    protected BigDecimal eHd(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eHd(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to ehd as node1[" + node1 , ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
         }
@@ -162,7 +184,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
         }
 
-        BigDecimal gammaValue = gamma(node1.getEdgeToParent(), node2.getEdgeToParent());
+        BigDecimal gammaValue = gamma(record, node1.getEdgeToParent(), node2.getEdgeToParent());
 
         BigDecimal nu = preferenceProfile.getDefaultRoleDiscountFactor();
 
@@ -172,7 +194,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
             logger.debug("e-hd: gammaValue[" + gammaValue.toPlainString() + "], nu[" + nu.toPlainString() + "], nuPrime[" + nuPrime + "].");
         }
 
-        BigDecimal simSubTree = measureDirectedSimilarity(node1, node2);
+        BigDecimal simSubTree = measureDirectedSimilarity(level +1 , node1, node2);
 
         if (logger.isDebugEnabled()) {
             logger.debug("e-hd: simSubTree[" + simSubTree + "].");
@@ -185,7 +207,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
     }
 
     // involve with 'roles'
-    protected BigDecimal gamma(String edge1, String edge2) {
+    protected BigDecimal gamma(SimRecord record, String edge1, String edge2) {
         if (edge1 == null || edge2 == null) {
             throw new JSimPiException("Unable to gamma as edge1[" +
                     edge1 + "] and edge2[" + edge2 + "] are null." , ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
@@ -205,6 +227,10 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
         StrBuilder builder2 = new StrBuilder().append(edgeSet1.size());
         BigDecimal divisor = new BigDecimal(builder2.toString());
+
+        for (String edge : intersection) {
+            record.appendExi(edge);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("gamma: numerator[" + numerator + "], divisor[" + divisor + "].");
@@ -237,7 +263,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
         markedTime.clear();
 
         markedTime.add(DateTime.now());
-        BigDecimal value = measureDirectedSimilarity(rootTree1, rootTree2);
+        BigDecimal value = measureDirectedSimilarity(0, rootTree1, rootTree2);
         markedTime.add(DateTime.now());
 
         return value;

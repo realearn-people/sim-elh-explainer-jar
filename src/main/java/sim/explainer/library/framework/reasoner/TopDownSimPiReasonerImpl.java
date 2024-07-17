@@ -275,8 +275,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
                 if (node1Child.equals(causeMaxExi2)) { // same concept
                     record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
                 } else if (causeMaxExi2 != null) { // diff concept
-                    record.appendEmb(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
-                    record.appendEmb(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.toString()));
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.toString()));
                 }
 
                 BigDecimal weightedRoleVal = roleImportance.multiply(max);

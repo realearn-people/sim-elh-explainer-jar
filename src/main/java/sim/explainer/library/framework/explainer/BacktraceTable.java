@@ -3,6 +3,7 @@ package sim.explainer.library.framework.explainer;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.Map;
 
 public class BacktraceTable {
 
@@ -45,5 +46,23 @@ public class BacktraceTable {
 
     public HashMap<Integer, HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>>> getTable() {
         return table;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("BacktraceTable {\n");
+        for (Map.Entry<Integer, HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>>> levelEntry : table.entrySet()) {
+            sb.append("  Level ").append(levelEntry.getKey()).append(":\n");
+            for (Map.Entry<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> sourceEntry : levelEntry.getValue().entrySet()) {
+                sb.append("    TreeNode1: ").append(sourceEntry.getKey().toString()).append("\n");
+                for (Map.Entry<TreeNode<Set<String>>, SimRecord> targetEntry : sourceEntry.getValue().entrySet()) {
+                    sb.append("      TreeNode2: ").append(targetEntry.getKey().toString()).append("\n");
+                    sb.append("      SimRecord: ").append(targetEntry.getValue().toString()).append("\n");
+                }
+            }
+        }
+        sb.append("}");
+        return sb.toString();
     }
 }
