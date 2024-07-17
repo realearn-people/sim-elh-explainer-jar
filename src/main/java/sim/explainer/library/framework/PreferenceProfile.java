@@ -1,4 +1,4 @@
-package sim.explainer.library.service;
+package sim.explainer.library.framework;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.unfolding.SuperRoleUnfolderManchesterSyntax;
-import sim.explainer.library.framework.OWLServiceContext;
 
 import java.math.BigDecimal;
 import java.util.HashMap;

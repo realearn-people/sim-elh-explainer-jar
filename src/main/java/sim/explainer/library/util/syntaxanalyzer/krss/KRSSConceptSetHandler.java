@@ -8,6 +8,8 @@ import sim.explainer.library.util.syntaxanalyzer.Handler;
 import sim.explainer.library.util.syntaxanalyzer.HandlerContextImpl;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 public class KRSSConceptSetHandler extends Handler {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

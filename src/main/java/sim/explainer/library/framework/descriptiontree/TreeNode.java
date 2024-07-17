@@ -12,15 +12,17 @@ public class TreeNode<T> {
     private List<TreeNode<T>> children = new LinkedList<TreeNode<T>>();
     private int id;
     private String edgeToParent;
+    private String conceptName;
 
-    public TreeNode(String edgeToParent, T data, int id) {
+    public TreeNode(String conceptName, String edgeToParent, T data, int id) {
         this.edgeToParent = edgeToParent;
         this.data = data;
         this.id = id;
+        this.conceptName = conceptName;
     }
 
-    protected TreeNode<T> addChild(String edgeToParent, T node, int nodeId) {
-        TreeNode<T> child = new TreeNode<T>(edgeToParent, node, nodeId);
+    protected TreeNode<T> addChild(String conceptName, String edgeToParent, T node, int nodeId) {
+        TreeNode<T> child = new TreeNode<T>(conceptName, edgeToParent, node, nodeId);
         this.children.add(child);
 
         return child;
@@ -63,5 +65,9 @@ public class TreeNode<T> {
 
     public String getEdgeToParent() {
         return edgeToParent;
+    }
+
+    public String getConceptName() {
+        return conceptName;
     }
 }

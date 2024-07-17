@@ -1,14 +1,15 @@
 package sim.explainer.library.framework.reasoner;
 
 import org.joda.time.DateTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.descriptiontree.BreadthFirstTreeIterator;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
-import sim.explainer.library.service.PreferenceProfile;
+import sim.explainer.library.framework.PreferenceProfile;
+import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.util.TimeUtils;
 
 import java.math.BigDecimal;
@@ -48,16 +49,16 @@ public class DynamicProgrammingSimPiReasonerImpl extends TopDownSimPiReasonerImp
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected BigDecimal eHdPi(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eHdPi(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) { // level can be any, its will not affect
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to ehd as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.DynamicProgrammingSimPiReasonerImpl_IllegalArguments);
         }
 
-        BigDecimal gammaValue = gammaPi(node1.getEdgeToParent(), node2.getEdgeToParent());
+        BigDecimal gammaValue = gammaPi(record, node1.getEdgeToParent(), node2.getEdgeToParent());
 
         BigDecimal discountFactor = preferenceProfile.getRoleDiscountFactor().get(node1.getEdgeToParent());
         if (discountFactor == null) {
-            discountFactor = new BigDecimal("0.4");
+            discountFactor = preferenceProfile.getDefaultRoleDiscountFactor();
         }
 
         BigDecimal nuPrime = BigDecimal.ONE.subtract(discountFactor);
@@ -79,6 +80,8 @@ public class DynamicProgrammingSimPiReasonerImpl extends TopDownSimPiReasonerImp
             throw new JSimPiException("Unable to measure directed similarity as tree1[" + tree1
                     + "] and tree2[" + tree2 + "] are null.", ErrorCode.DynamicProgrammingSimPiReasonerImpl_IllegalArguments);
         }
+
+        this.backtraceTable = new BacktraceTable();
 
         markedTime.clear();
 
@@ -102,23 +105,27 @@ public class DynamicProgrammingSimPiReasonerImpl extends TopDownSimPiReasonerImp
                 for (int j = 0; list2 != null && j < list2.size(); j++) {
                     TreeNode<Set<String>> treeNode2 = list2.get(j);
 
-                    BigDecimal phd = phdPi(treeNode1, treeNode2);
+                    SimRecord record = new SimRecord();
+
+                    BigDecimal phd = phdPi(record, treeNode1, treeNode2);
 
                     if (i == heightTree1 - 1) {
-
                         this.addNodePairHdValMap(treeNode1.getId(), treeNode2.getId(), phd);
+                        record.setDeg(phd);
+                        this.backtraceTable.addRecord(i, treeNode1, treeNode2, record);
                     }
 
                     else {
 
                         BigDecimal mu = muPi(treeNode1);
-                        BigDecimal eSetHd = eSetHdPi(treeNode1, treeNode2);
+                        BigDecimal eSetHd = eSetHdPi(i, record, treeNode1, treeNode2);
                         BigDecimal primitiveOperations = mu.multiply(phd);
                         BigDecimal edgeOperations = BigDecimal.ONE.subtract(mu).multiply(eSetHd);
                         BigDecimal hdVal = primitiveOperations.add(edgeOperations);
                         this.addNodePairHdValMap(treeNode1.getId(), treeNode2.getId(), hdVal);
+                        record.setDeg(hdVal);
+                        this.backtraceTable.addRecord(i, treeNode1, treeNode2, record);
                     }
-
                 }
             }
         }

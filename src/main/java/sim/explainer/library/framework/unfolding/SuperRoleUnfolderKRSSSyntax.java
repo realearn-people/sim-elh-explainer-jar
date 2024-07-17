@@ -40,18 +40,13 @@ public class SuperRoleUnfolderKRSSSyntax implements IRoleUnfolder {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private Set<String> unfold(String role, Set<String> superRoles) {
-
         String roleDescription;
 
         if (this.fullRoleDefinitionMap.containsKey(role)) {
             roleDescription = this.fullRoleDefinitionMap.get(role);
-        }
-
-        else if (this.primitiveRoleDefinitionMap.containsKey(role)) {
+        } else if (this.primitiveRoleDefinitionMap.containsKey(role)) {
             roleDescription = this.primitiveRoleDefinitionMap.get(role);
-        }
-
-        else {
+        } else {
             roleDescription = role;
         }
 

@@ -1,19 +1,16 @@
 package sim.explainer.library.framework.reasoner;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import sim.explainer.library.enumeration.ReasonerParameters;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.descriptiontree.BreadthFirstTreeIterator;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
-import sim.explainer.library.service.PreferenceProfile;
+import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.util.TimeUtils;
 
 import java.math.BigDecimal;
@@ -87,6 +84,8 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
         if (tree1 == null || tree2 == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1[" + tree1 + "] and tree2[" + tree2 + "] are null.", ErrorCode.DynamicProgrammingSimReasonerImpl_IllegalArguments);
         }
+
+        this.backtraceTable = new BacktraceTable();
 
         markedTime.clear();
 

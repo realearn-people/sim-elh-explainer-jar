@@ -24,4 +24,14 @@ public class MyStringUtils {
         return builder.toString();
     }
 
+    public static String generateExistential(String roleName, String conceptName) {
+        StringBuilder builder = new StringBuilder("some");
+        builder.append(StringUtils.SPACE);
+        builder.append(roleName);
+        builder.append(StringUtils.SPACE);
+        builder.append(conceptName);
+
+        return builder.toString();
+    }
+
 }

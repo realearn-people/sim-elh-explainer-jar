@@ -3,6 +3,7 @@ package sim.explainer.library.framework.descriptiontree;
 import org.springframework.stereotype.Component;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.util.MyStringUtils;
 import sim.explainer.library.util.syntaxanalyzer.ChainOfResponsibilityHandler;
 import sim.explainer.library.util.syntaxanalyzer.HandlerContextImpl;
 import sim.explainer.library.util.syntaxanalyzer.krss.KRSSConceptSetHandler;
@@ -10,7 +11,6 @@ import sim.explainer.library.util.syntaxanalyzer.krss.KRSSTopLevelParserHandler;
 import sim.explainer.library.util.syntaxanalyzer.manchester.ManchesterConceptSetHandler;
 import sim.explainer.library.util.syntaxanalyzer.manchester.ManchesterTopLevelParserHandler;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class TreeBuilder {
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
         Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
 
-        TreeNode<Set<String>> child = tree.addNode(edge, parentNode, primitivesTop);
+        TreeNode<Set<String>> child = tree.addNode(MyStringUtils.generateExistential(edge, nestedPrimitiveStr), edge, parentNode, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
@@ -65,7 +65,7 @@ public class TreeBuilder {
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
         Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
 
-        TreeNode<Set<String>> child = tree.addNode(edge, parentNode, primitivesTop);
+        TreeNode<Set<String>> child = tree.addNode(MyStringUtils.generateExistential(edge, nestedPrimitiveStr), edge, parentNode, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
@@ -80,24 +80,24 @@ public class TreeBuilder {
     // Public //////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Tree<Set<String>> constructAccordingToKRSSSyntax(String treeLabel, String concept) {
-        if (treeLabel == null || concept == null) {
-            throw new JSimPiException("Unable to construct according to krss syntax as treeLabel[" + treeLabel + "] and concept["
-                    + concept + "] are null.", ErrorCode.TreeBuilder_IllegalArguments);
+    public Tree<Set<String>> constructAccordingToKRSSSyntax(String conceptName, String conceptDescription) {
+        if (conceptName == null || conceptDescription == null) {
+            throw new JSimPiException("Unable to construct according to krss syntax as conceptName[" + conceptName + "] and conceptDescription["
+                    + conceptDescription + "] are null.", ErrorCode.TreeBuilder_IllegalArguments);
         }
 
         // Invoke business logic
         HandlerContextImpl context = new HandlerContextImpl();
-        context.setConceptDescription(concept);
+        context.setConceptDescription(conceptDescription);
         krssHandlerChain.invoke(context);
 
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
         Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
 
-        Tree<Set<String>> tree = new Tree<Set<String>>(treeLabel);
+        Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
-        TreeNode<Set<String>> parent = tree.addNode(null, null, primitivesTop);
+        TreeNode<Set<String>> parent = tree.addNode(conceptName, null, null, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
@@ -110,23 +110,23 @@ public class TreeBuilder {
         return tree;
     }
 
-    public Tree<Set<String>> constructAccordingToManchesterSyntax(String treeLabel, String concept) {
-        if (treeLabel == null || concept == null) {
-            throw new JSimPiException("Unable to construct according to manchester syntax as treeLabel[" + treeLabel + "] and concept["
-                    + concept + "] are null.", ErrorCode.TreeBuilder_IllegalArguments);
+    public Tree<Set<String>> constructAccordingToManchesterSyntax(String conceptName, String conceptDescription) {
+        if (conceptName == null || conceptDescription == null) {
+            throw new JSimPiException("Unable to construct according to manchester syntax as conceptName[" + conceptName + "] and conceptDescription["
+                    + conceptDescription + "] are null.", ErrorCode.TreeBuilder_IllegalArguments);
         }
         // Invoke business logic
         HandlerContextImpl context = new HandlerContextImpl();
-        context.setConceptDescription(concept);
+        context.setConceptDescription(conceptDescription);
         manchesterHandlerChain.invoke(context);
 
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
         Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
 
-        Tree<Set<String>> tree = new Tree<Set<String>>(treeLabel);
+        Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
-        TreeNode<Set<String>> parent = tree.addNode(null, null, primitivesTop);
+        TreeNode<Set<String>> parent = tree.addNode(conceptName, null, null, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 

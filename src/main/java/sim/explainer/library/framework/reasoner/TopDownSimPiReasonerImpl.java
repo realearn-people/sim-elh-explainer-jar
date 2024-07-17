@@ -3,14 +3,16 @@ package sim.explainer.library.framework.reasoner;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
+import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.framework.unfolding.IRoleUnfolder;
-import sim.explainer.library.service.PreferenceProfile;
+import sim.explainer.library.framework.PreferenceProfile;
+import sim.explainer.library.util.MyStringUtils;
 import sim.explainer.library.util.TimeUtils;
 
 import javax.annotation.Resource;
@@ -29,6 +31,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
     private List<DateTime> markedTime = new ArrayList<DateTime>();
 
+    protected BacktraceTable backtraceTable = new BacktraceTable();
+
     public TopDownSimPiReasonerImpl(PreferenceProfile preferenceProfile) {
         this.preferenceProfile = preferenceProfile;
     }
@@ -37,17 +41,22 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
     // Private /////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private BigDecimal measureDirectedSimilarity(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    private BigDecimal measureDirectedSimilarity(int level, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to measure directed similarity as node1[" +
                     node1 + "] and node2[" + node2 + "] are null." , ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
 
+        SimRecord record = new SimRecord();
+
         BigDecimal muPi = muPi(node1);
 
-        BigDecimal primitiveOperations = muPi.multiply(phdPi(node1, node2));
+        BigDecimal primitiveOperations = muPi.multiply(phdPi(record, node1, node2));
 
-        BigDecimal edgeOperations = BigDecimal.ONE.subtract(muPi).multiply(eSetHdPi(node1, node2));
+        BigDecimal edgeOperations = BigDecimal.ONE.subtract(muPi).multiply(eSetHdPi(level, record, node1, node2));
+
+        record.setDeg(primitiveOperations.add(edgeOperations));
+        this.backtraceTable.addRecord(level, node1, node2, record);
 
         return primitiveOperations.add(edgeOperations);
     }
@@ -132,7 +141,7 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
         return sumOfPrimitives.divide(divisor, 5, BigDecimal.ROUND_HALF_UP);
     }
 
-    protected BigDecimal phdPi(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal phdPi(SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to phd pi as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
@@ -153,6 +162,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
             Set<String> primitivesNode1 = node1.getData();
             for (String primitiveNode1 : primitivesNode1) {
+
+                String causeMaxPri2 = "";
 
                 BigDecimal max = BigDecimal.ZERO;
 
@@ -180,11 +191,20 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
                     if (val.compareTo(max) > 0) {
                         max = val;
+                        causeMaxPri2 = primitiveNode2;
                     }
                 }
 
                 if (logger.isDebugEnabled()) {
-                    logger.debug("phd pi(primitiveNode1[" + primitiveNode1 + "], primitiveNode2) = " + max);
+                    logger.debug("phd pi(primitiveNode1[" + primitiveNode1 + "], primitiveNode2[" + causeMaxPri2 + "]) = " + max);
+                }
+
+                // TODO - concept check
+                if (primitiveNode1.equals(causeMaxPri2)) { // same concept
+                    record.appendPri(primitiveNode1);
+                } else if (!causeMaxPri2.equals("")) { // diff concept
+                    record.appendEmb(primitiveNode1);
+                    record.appendEmb(causeMaxPri2);
                 }
 
                 BigDecimal importance = primitiveConceptImportance.get(primitiveNode1);
@@ -199,14 +219,14 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
             BigDecimal divisor = sumPrimitiveConceptImportance(node1);
 
             if (logger.isDebugEnabled()) {
-                logger.debug("phd pi: sumWeightedSimilarity[" + sumWeightedSimilarity + "] divisor[" + divisor + "]");
+                logger.debug("phd pi: sumWeightedSimilarity \"Concept\" [" + sumWeightedSimilarity + "] divisor[" + divisor + "] = " + sumWeightedSimilarity.divide(divisor, 5, BigDecimal.ROUND_HALF_UP));
             }
 
             return sumWeightedSimilarity.divide(divisor, 5, BigDecimal.ROUND_HALF_UP);
         }
     }
 
-    protected BigDecimal eSetHdPi(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eSetHdPi(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to e set hd pi as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
@@ -228,20 +248,35 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
             for (TreeNode<Set<String>> node1Child : node1Children) {
 
+                TreeNode<Set<String>> causeMaxExi2 = null;
+
                 BigDecimal max = BigDecimal.ZERO;
 
                 for (TreeNode<Set<String>> node2Child : node2Children) {
 
-                    BigDecimal ehdPiValue = eHdPi(node1Child, node2Child);
+                    BigDecimal ehdPiValue = eHdPi(level, record, node1Child, node2Child);
 
                     if (max.compareTo(ehdPiValue) < 0) {
                         max = ehdPiValue;
+                        causeMaxExi2 = node2Child;
                     }
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("esethd pi(primitiveNode1[" + node1Child + "], primitiveNode2[" + causeMaxExi2 + "]) = " + max);
                 }
 
                 BigDecimal roleImportance = preferenceProfile.getRoleImportance().get(node1Child.getEdgeToParent());
                 if (roleImportance == null) {
                     roleImportance = BigDecimal.ONE;
+                }
+
+                // TODO - concept check
+                if (node1Child.equals(causeMaxExi2)) { // same concept
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                } else if (causeMaxExi2 != null) { // diff concept
+                    record.appendEmb(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                    record.appendEmb(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.toString()));
                 }
 
                 BigDecimal weightedRoleVal = roleImportance.multiply(max);
@@ -251,29 +286,33 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
             BigDecimal divisor = sumRoleImportance(node1);
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("esethd pi: sumWeightedSimilarity \"Role\" [" + sum + "] divisor[" + divisor + "] = " + sum.divide(divisor, 5, BigDecimal.ROUND_UP));
+            }
+
             return sum.divide(divisor, 5, BigDecimal.ROUND_UP);
         }
     }
 
-    protected BigDecimal eHdPi(TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eHdPi(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to e hd pi as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
 
-        BigDecimal gammaPiVal = gammaPi(node1.getEdgeToParent(), node2.getEdgeToParent());
+        BigDecimal gammaPiVal = gammaPi(record, node1.getEdgeToParent(), node2.getEdgeToParent());
 
         BigDecimal discountFactor = preferenceProfile.getRoleDiscountFactor().get(node1.getEdgeToParent());
         if (discountFactor == null) {
-            discountFactor = new BigDecimal("0.4");
+            discountFactor = preferenceProfile.getDefaultRoleDiscountFactor();
         }
 
         BigDecimal nuPrime = BigDecimal.ONE.subtract(discountFactor);
-        BigDecimal simSubTree = measureDirectedSimilarity(node1, node2);
+        BigDecimal simSubTree = measureDirectedSimilarity(level+1, node1, node2);
 
         return nuPrime.multiply(simSubTree).add(discountFactor).multiply(gammaPiVal);
     }
 
-    protected BigDecimal gammaPi(String edge1, String edge2) {
+    protected BigDecimal gammaPi(SimRecord record, String edge1, String edge2) {
         if (edge1 == null || edge2 == null) {
             throw new JSimPiException("Unable to gamma pi as edge1[" + edge1 + "] and edge2[" + edge2 + "] are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
@@ -292,6 +331,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
             Map<String, BigDecimal> roleImportance = preferenceProfile.getRoleImportance();
 
             for (String role1 : edgeSet1) {
+
+                String causeMaxRole2 = "";
 
                 BigDecimal max = BigDecimal.ZERO;
 
@@ -313,7 +354,20 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
                     if (val.compareTo(max) > 0) {
                         max = val;
+                        causeMaxRole2 = role2;
                     }
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("gamma pi(primitiveNode1[" + role1 + "], primitiveNode2[" + causeMaxRole2 + "]) = " + max);
+                }
+
+                // TODO - concept check
+                if (role1.equals(causeMaxRole2)) { // same concept
+                    record.appendEmb(causeMaxRole2);
+                } else if (!causeMaxRole2.equals("")) { // diff concept
+                    record.appendEmb(role1);
+                    record.appendEmb(causeMaxRole2);
                 }
 
                 BigDecimal importance = roleImportance.get(role1);
@@ -328,6 +382,10 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
             BigDecimal divisor = sumRoleImportance(edgeSet1);
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("gamma pi: sumWeightedSimilarity \"Super Role\" [" + sum + "] divisor[" + divisor + "] = " + sum.divide(divisor, 5, BigDecimal.ROUND_UP));
+            }
+
             return sum.divide(divisor, 5, BigDecimal.ROUND_HALF_UP);
         }
     }
@@ -337,11 +395,18 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
+    public BacktraceTable getBacktraceTable() {
+        return backtraceTable;
+    }
+
+    @Override
     public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
         if (tree1 == null || tree2 == null || preferenceProfile == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1["
                     + tree1 + "] and tree2[" + tree2 + " are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
+
+        this.backtraceTable = new BacktraceTable();
 
         TreeNode<Set<String>> rootTree1 = tree1.getNodes().get(0);
         TreeNode<Set<String>> rootTree2 = tree2.getNodes().get(0);
@@ -349,7 +414,7 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
         markedTime.clear();
 
         markedTime.add(DateTime.now());
-        BigDecimal value = measureDirectedSimilarity(rootTree1, rootTree2);
+        BigDecimal value = measureDirectedSimilarity(0, rootTree1, rootTree2);
         markedTime.add(DateTime.now());
 
         return value;

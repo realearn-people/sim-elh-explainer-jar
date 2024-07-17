@@ -1,21 +1,18 @@
 package sim.explainer.library.framework.reasoner;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import sim.explainer.library.enumeration.ReasonerParameters;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
 import sim.explainer.library.framework.unfolding.IRoleUnfolder;
-import sim.explainer.library.service.PreferenceProfile;
+import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.util.TimeUtils;
 
 import javax.annotation.Resource;
@@ -30,15 +27,17 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
     private static final Logger logger = LoggerFactory.getLogger(TopDownSimReasonerImpl.class);
 
+    protected PreferenceProfile preferenceProfile;
+
     @Resource(name="superRoleUnfolderManchesterSyntax")
     private IRoleUnfolder iRoleUnfolder;
 
-    protected PreferenceProfile preferenceProfile;
-
     private List<DateTime> markedTime = new ArrayList<DateTime>();
 
+    protected BacktraceTable backtraceTable = new BacktraceTable();
+
     public TopDownSimReasonerImpl(PreferenceProfile preferenceProfile) {
-        this.preferenceProfile = new PreferenceProfile();
+        this.preferenceProfile = preferenceProfile;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -219,11 +218,18 @@ public class TopDownSimReasonerImpl implements IReasoner {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
+    public BacktraceTable getBacktraceTable() {
+        return backtraceTable;
+    }
+
+    @Override
     public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
         if (tree1 == null || tree2 == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1[" + tree1 + "] " +
                     "and tree2[" + tree2 + "] are null.", ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
         }
+
+        this.backtraceTable = new BacktraceTable();
 
         TreeNode<Set<String>> rootTree1 = tree1.getNodes().get(0);
         TreeNode<Set<String>> rootTree2 = tree2.getNodes().get(0);

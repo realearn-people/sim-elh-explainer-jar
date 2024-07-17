@@ -4,14 +4,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
+import org.springframework.stereotype.Component;
+import sim.explainer.library.controller.KRSSSimilarityController;
+import sim.explainer.library.controller.OWLSimilarityController;
 import sim.explainer.library.enumeration.FileTypeConstant;
 import sim.explainer.library.enumeration.TypeConstant;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.KRSSServiceContext;
 import sim.explainer.library.framework.OWLServiceContext;
+import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.service.ExplanationService;
-import sim.explainer.library.service.PreferenceProfile;
 import sim.explainer.library.service.SimilarityService;
 import sim.explainer.library.service.ValidationService;
 
@@ -35,7 +39,13 @@ public class SimExplainer {
     private KRSSServiceContext krssServiceContext = new KRSSServiceContext();
 
     private ValidationService validationService = new ValidationService(owlServiceContext, krssServiceContext);
-    private SimilarityService similarityService = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
+    private SimilarityService similarityService_krss = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
+    private SimilarityService similarityService_owl = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
+
+    private KRSSSimilarityController krssSimilarityController = new KRSSSimilarityController(validationService, similarityService_krss);
+    private OWLSimilarityController owlSimilarityController = new OWLSimilarityController(validationService, similarityService_owl);
+
+    private ExplanationService explanationService;
 
     public SimExplainer(String directoryPath) {
         Path onto_dir = Paths.get(directoryPath);
@@ -88,6 +98,10 @@ public class SimExplainer {
                     });
         } catch (IOException e) {
             throw new JSimPiException("File not found", ErrorCode.Application_InvalidPath);
+        }
+
+        if (preferenceProfileDirectoryPath == null) {
+            return;
         }
 
         Path prefer_dir = Paths.get(preferenceProfileDirectoryPath);
@@ -221,10 +235,30 @@ public class SimExplainer {
             throw new JSimPiException("Concept not provide", ErrorCode.Application_IllegalArguments);
         }
 
-        return similarityService.measureConceptWithType(concept1, concept2, optionVal, this.fileType).toString();
+        preferenceProfile.setDefaultRoleDiscountFactor(BigDecimal.valueOf(0.5));
 
-//        String explanation = ExplanationService.explanation.toString();
-//        return explanation;
+        String result;
+        List<BacktraceTable> backtraceTables;
+
+        switch (this.fileType) {
+            case KRSS_FILE -> {
+                result = krssSimilarityController.measureSimilarity(concept1, concept2, optionVal, this.fileType).toString();
+                backtraceTables = krssSimilarityController.getBacktraceTables();
+                explanationService = new ExplanationService(backtraceTables.get(0), backtraceTables.get(1));
+            }
+            case OWL_FILE -> {
+                result = owlSimilarityController.measureSimilarity(concept1, concept2, optionVal, this.fileType).toString();
+                backtraceTables = owlSimilarityController.getBacktraceTables();
+                explanationService = new ExplanationService(backtraceTables.get(0), backtraceTables.get(1));
+            }
+            default -> throw new JSimPiException("File type not supported.", ErrorCode.Application_InvalidFileType);
+        }
+
+        return result;
+    }
+
+    public ExplanationService getExplanationService() {
+        return explanationService;
     }
 
     public List<String> retrieveConceptName() {
@@ -242,6 +276,7 @@ public class SimExplainer {
 
             case KRSS_FILE:
                 conceptNames.addAll(krssServiceContext.getFullConceptDefinitionMap().keySet());
+                conceptNames.addAll(krssServiceContext.getPrimitiveConceptDefinitionMap().keySet());
                 break;
 
             default:

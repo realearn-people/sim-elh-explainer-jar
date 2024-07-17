@@ -10,6 +10,8 @@ public enum ErrorCode {
     // Controller
     OwlSimilarityController_IllegalArguments("OwlSimilarityController_IllegalArguments"),
     OwlSimilarityController_InvalidConceptNames("OwlSimilarityController_InvalidConceptNames"),
+    KrssSimilarityController_IllegalArguments("KrssSimilarityController_IllegalArguments"),
+    KrssSimilarityController_InvalidConceptNames("KrssSimilarityController_InvalidConceptNames"),
 
     // Framework
     ConceptUnfolderManchesterSyntax_IllegalArguments("ConceptUnfolderManchesterSyntax_IllegalArguments"),
