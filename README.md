@@ -72,7 +72,7 @@ To use the `SimExplainer` library, follow these steps:
 
     This measures the similarity between two concepts.
     ```java
-    BigDecimal similarity = explainer.simMeasurementResult(TypeConstant.SOME_OPTION, "Concept1", "Concept2");
+    BigDecimal similarity = explainer.similarity(TypeConstant.SOME_OPTION, "Concept1", "Concept2");
     System.out.println("Similarity: " + similarity);
     ```
 
