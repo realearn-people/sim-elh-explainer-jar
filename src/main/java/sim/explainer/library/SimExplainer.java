@@ -4,10 +4,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
-import org.springframework.stereotype.Component;
 import sim.explainer.library.controller.KRSSSimilarityController;
 import sim.explainer.library.controller.OWLSimilarityController;
 import sim.explainer.library.enumeration.FileTypeConstant;
+import sim.explainer.library.enumeration.ReasoningDirectionConstant;
 import sim.explainer.library.enumeration.TypeConstant;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -35,17 +36,13 @@ public class SimExplainer {
 
     private PreferenceProfile preferenceProfile = new PreferenceProfile();
 
-    private OWLServiceContext owlServiceContext = new OWLServiceContext();
-    private KRSSServiceContext krssServiceContext = new KRSSServiceContext();
+    OWLServiceContext owlServiceContext = new OWLServiceContext();
+    KRSSServiceContext krssServiceContext = new KRSSServiceContext();
 
-    private ValidationService validationService = new ValidationService(owlServiceContext, krssServiceContext);
-    private SimilarityService similarityService_krss = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
-    private SimilarityService similarityService_owl = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
+    SimilarityService similarityService = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
+    ValidationService validationService = new ValidationService(owlServiceContext, krssServiceContext);
 
-    private KRSSSimilarityController krssSimilarityController = new KRSSSimilarityController(validationService, similarityService_krss);
-    private OWLSimilarityController owlSimilarityController = new OWLSimilarityController(validationService, similarityService_owl);
-
-    private ExplanationService explanationService;
+    private HashMap<String, HashMap<String, ExplanationService>> explanationMap = new HashMap<>();
 
     public SimExplainer(String directoryPath) {
         Path onto_dir = Paths.get(directoryPath);
@@ -227,7 +224,11 @@ public class SimExplainer {
 
     }
 
-    public String simMeasurementResult(TypeConstant optionVal, String concept1, String concept2) {
+    public void resetPreferenceProfile() {
+        preferenceProfile.reset();
+    }
+
+    public BigDecimal similarity(TypeConstant optionVal, String concept1, String concept2) {
         if (optionVal == null) {
             throw new JSimPiException("Option not provide", ErrorCode.Application_IllegalArguments);
         }
@@ -235,21 +236,25 @@ public class SimExplainer {
             throw new JSimPiException("Concept not provide", ErrorCode.Application_IllegalArguments);
         }
 
-        preferenceProfile.setDefaultRoleDiscountFactor(BigDecimal.valueOf(0.5));
-
-        String result;
-        List<BacktraceTable> backtraceTables;
+        // result variable
+        BigDecimal result;
 
         switch (this.fileType) {
             case KRSS_FILE -> {
-                result = krssSimilarityController.measureSimilarity(concept1, concept2, optionVal, this.fileType).toString();
-                backtraceTables = krssSimilarityController.getBacktraceTables();
-                explanationService = new ExplanationService(backtraceTables.get(0), backtraceTables.get(1));
+                KRSSSimilarityController krssSimilarityController = new KRSSSimilarityController(validationService, similarityService);
+
+                result = krssSimilarityController.measureSimilarity(concept1, concept2, optionVal, this.fileType);
+                List<BacktraceTable> backtraceTables = krssSimilarityController.getBacktraceTables();
+
+                addExplanationMap(concept1, concept2, backtraceTables.get(0), backtraceTables.get(1));
             }
             case OWL_FILE -> {
-                result = owlSimilarityController.measureSimilarity(concept1, concept2, optionVal, this.fileType).toString();
-                backtraceTables = owlSimilarityController.getBacktraceTables();
-                explanationService = new ExplanationService(backtraceTables.get(0), backtraceTables.get(1));
+                OWLSimilarityController owlSimilarityController = new OWLSimilarityController(validationService, similarityService);
+
+                result = owlSimilarityController.measureSimilarity(concept1, concept2, optionVal, this.fileType);
+                List<BacktraceTable> backtraceTables = owlSimilarityController.getBacktraceTables();
+
+                addExplanationMap(concept1, concept2, backtraceTables.get(0), backtraceTables.get(1));
             }
             default -> throw new JSimPiException("File type not supported.", ErrorCode.Application_InvalidFileType);
         }
@@ -257,8 +262,77 @@ public class SimExplainer {
         return result;
     }
 
-    public ExplanationService getExplanationService() {
-        return explanationService;
+    public void setDefaultRoleDiscountFactor(BigDecimal value) {
+        preferenceProfile.setDefaultRoleDiscountFactor(value);
+    }
+
+    private void addExplanationMap(String concept1, String concept2, BacktraceTable backtraceTable_forward, BacktraceTable backtraceTable_backward) {
+        ExplanationService explanationService;
+
+        // concept1 -> concept2
+        explanationService = new ExplanationService(backtraceTable_forward, backtraceTable_backward);
+
+        if (!explanationMap.containsKey(concept1)) {
+            HashMap<String, ExplanationService> map = new HashMap<>();
+            map.put(concept2, explanationService);
+
+            explanationMap.put(concept1, map);
+        } else if (!explanationMap.get(concept1).containsKey(concept2)) {
+            explanationMap.get(concept1).put(concept2, explanationService);
+        }
+
+        // concept2 -> concept1
+        explanationService = new ExplanationService(backtraceTable_backward, backtraceTable_forward);
+
+        if (!explanationMap.containsKey(concept2)) {
+            HashMap<String, ExplanationService> map = new HashMap<>();
+            map.put(concept1, explanationService);
+
+            explanationMap.put(concept2, map);
+        } else if (!explanationMap.get(concept2).containsKey(concept1)) {
+            explanationMap.get(concept2).put(concept1, explanationService);
+        }
+    }
+
+    public String treeHierachy(String concept) {
+        if (concept == null) {
+            throw new JSimPiException("Concept not provide", ErrorCode.Application_IllegalArguments);
+        }
+
+        if (!explanationMap.containsKey(concept)) {
+            throw new JSimPiException("The concept [" + concept + "] have not been calculate similarity yet.", ErrorCode.Application_IllegalArguments);
+        }
+
+        ExplanationService explanation = explanationMap.get(concept).values().iterator().next();
+
+        return explanation.treeHierarchy(concept);
+    }
+
+    public Explanation getExplanation(String concept1, String concept2) {
+        if (concept1 == null || concept2 == null) {
+            throw new JSimPiException("Concept not provide", ErrorCode.Application_IllegalArguments);
+        }
+
+        if (!explanationMap.containsKey(concept1)) {
+            throw new JSimPiException("The concept [" + concept1 + "] have not been calculate similarity yet.", ErrorCode.Application_IllegalArguments);
+        }
+        if (!explanationMap.containsKey(concept2)) {
+            throw new JSimPiException("The concept [" + concept2 + "] have not been calculate similarity yet.", ErrorCode.Application_IllegalArguments);
+        }
+        if (!explanationMap.get(concept1).containsKey(concept2)) {
+            throw new JSimPiException("Have not been calculate similarity between [" + concept1 + "] and [" + concept2 + "]  yet.", ErrorCode.Application_IllegalArguments);
+        }
+
+        Explanation explanation = new Explanation();
+        explanation.forward = explanationMap.get(concept1).get(concept2).explanationTree(ReasoningDirectionConstant.FORWARD);
+        explanation.backward = explanationMap.get(concept1).get(concept2).explanationTree(ReasoningDirectionConstant.BACKWARD);
+
+        return explanation;
+    }
+
+    class Explanation {
+        public String forward;
+        public String backward;
     }
 
     public List<String> retrieveConceptName() {
