@@ -75,13 +75,14 @@ public class DynamicProgrammingSimPiReasonerImpl extends TopDownSimPiReasonerImp
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
+    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2, HashMap<String, String> mapper) {
         if (tree1 == null || tree2 == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1[" + tree1
                     + "] and tree2[" + tree2 + "] are null.", ErrorCode.DynamicProgrammingSimPiReasonerImpl_IllegalArguments);
         }
 
         this.backtraceTable = new BacktraceTable();
+        this.mapper = mapper;
 
         markedTime.clear();
 

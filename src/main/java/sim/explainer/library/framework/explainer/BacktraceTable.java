@@ -34,7 +34,7 @@ public class BacktraceTable {
         else {
             tmp_source = table.get(level).get(treeNode1);
 
-            TreeNode<Set<String>> current_tree = (TreeNode<Set<String>>) tmp_source.keySet().toArray()[0];
+            TreeNode<Set<String>> current_tree = tmp_source.keySet().iterator().next();
 
             // if recent record have less deg than new record
             if (tmp_source.get(current_tree).getDeg().compareTo(record.getDeg()) <= 0) {

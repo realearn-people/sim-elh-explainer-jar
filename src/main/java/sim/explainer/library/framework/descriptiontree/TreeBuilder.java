@@ -36,7 +36,7 @@ public class TreeBuilder {
     // Private /////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private void constructSubTreeWithKrssSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr) {
+    private void constructSubTreeWithKrssSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr, HashMap<String, String> mapper) {
 
         context.clear();
         context.setConceptDescription(nestedPrimitiveStr);
@@ -45,18 +45,23 @@ public class TreeBuilder {
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
         Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
 
-        TreeNode<Set<String>> child = tree.addNode(MyStringUtils.generateExistential(edge, nestedPrimitiveStr), edge, parentNode, primitivesTop);
+        TreeNode<Set<String>> child = tree.addNode(
+                MyStringUtils.mapConcepts(nestedPrimitiveStr, mapper),
+                MyStringUtils.mapConcepts(context.getConceptDescription(), mapper),
+                edge,
+                parentNode,
+                primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
             String nestedEdge = entry.getKey();
             for (String nestedConcept : entry.getValue()) {
-                constructSubTreeWithKrssSyntax(context, tree, nestedEdge, child, nestedConcept);
+                constructSubTreeWithKrssSyntax(context, tree, nestedEdge, child, nestedConcept, mapper);
             }
         }
     }
 
-    private void constructSubTreeWithManchesterSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr) {
+    private void constructSubTreeWithManchesterSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr, HashMap<String, String> mapper) {
 
         context.clear();
         context.setConceptDescription(nestedPrimitiveStr);
@@ -65,13 +70,18 @@ public class TreeBuilder {
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
         Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
 
-        TreeNode<Set<String>> child = tree.addNode(MyStringUtils.generateExistential(edge, nestedPrimitiveStr), edge, parentNode, primitivesTop);
+        TreeNode<Set<String>> child = tree.addNode(
+                MyStringUtils.mapConcepts(nestedPrimitiveStr, mapper),
+                MyStringUtils.mapConcepts(context.getConceptDescription(), mapper),
+                edge,
+                parentNode,
+                primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
             String nestedEdge = entry.getKey();
             for (String nestedConcept : entry.getValue()) {
-                constructSubTreeWithManchesterSyntax(context, tree, nestedEdge, child, nestedConcept);
+                constructSubTreeWithManchesterSyntax(context, tree, nestedEdge, child, nestedConcept, mapper);
             }
         }
     }
@@ -80,7 +90,7 @@ public class TreeBuilder {
     // Public //////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Tree<Set<String>> constructAccordingToKRSSSyntax(String conceptName, String conceptDescription) {
+    public Tree<Set<String>> constructAccordingToKRSSSyntax(HashMap<String, String> mapper, String conceptName, String conceptDescription) {
         if (conceptName == null || conceptDescription == null) {
             throw new JSimPiException("Unable to construct according to krss syntax as conceptName[" + conceptName + "] and conceptDescription["
                     + conceptDescription + "] are null.", ErrorCode.TreeBuilder_IllegalArguments);
@@ -97,20 +107,20 @@ public class TreeBuilder {
         Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
-        TreeNode<Set<String>> parent = tree.addNode(conceptName, null, null, primitivesTop);
+        TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), MyStringUtils.mapConcepts(context.getConceptDescription(), mapper), null, null, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
             String edge = entry.getKey();
             for (String primitiveSet : entry.getValue()) {
-                constructSubTreeWithKrssSyntax(context, tree, edge, parent, primitiveSet);
+                constructSubTreeWithKrssSyntax(context, tree, edge, parent, primitiveSet, mapper);
             }
         }
 
         return tree;
     }
 
-    public Tree<Set<String>> constructAccordingToManchesterSyntax(String conceptName, String conceptDescription) {
+    public Tree<Set<String>> constructAccordingToManchesterSyntax(HashMap<String, String> mapper, String conceptName, String conceptDescription) {
         if (conceptName == null || conceptDescription == null) {
             throw new JSimPiException("Unable to construct according to manchester syntax as conceptName[" + conceptName + "] and conceptDescription["
                     + conceptDescription + "] are null.", ErrorCode.TreeBuilder_IllegalArguments);
@@ -126,13 +136,13 @@ public class TreeBuilder {
         Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
-        TreeNode<Set<String>> parent = tree.addNode(conceptName, null, null, primitivesTop);
+        TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), MyStringUtils.mapConcepts(context.getConceptDescription(), mapper), null, null, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
             String edge = entry.getKey();
             for (String primitiveSet : entry.getValue()) {
-                constructSubTreeWithManchesterSyntax(context, tree, edge, parent, primitiveSet);
+                constructSubTreeWithManchesterSyntax(context, tree, edge, parent, primitiveSet, mapper);
             }
         }
 

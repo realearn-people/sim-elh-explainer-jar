@@ -58,9 +58,9 @@ public class ExplanationService {
 
     private void buildTreeAscii(TreeNode<Set<String>> node, StringBuilder result, String prefix, boolean isTail) {
         result.append(prefix).append(isTail ? "└── " : "├── ")
-                .append(node.getConceptName())
+                .append(node.getEdgeToParent() == null ? node.getConceptName() : node.getEdgeToParent()) // root concept
                 .append(" : ")
-                .append(node.getData())
+                .append(node.getConceptDescription())
                 .append("\n");
         for (int i = 0; i < node.getChildren().size() - 1; i++) {
             buildTreeAscii(node.getChildren().get(i), result, prefix + (isTail ? "    " : "│   "), false);
@@ -95,7 +95,11 @@ public class ExplanationService {
     }
 
     private void buildExplanationTreeAscii(BacktraceTable backtraceTable, TreeNode<Set<String>> node, StringBuilder result, String prefix, boolean isTail, int level) {
-        TreeNode<Set<String>> comparing_node = (TreeNode<Set<String>>) backtraceTable.getTable().get(level).get(node).keySet().toArray()[0];
+        if (!backtraceTable.getTable().containsKey(level)) {
+            return;
+        }
+
+        TreeNode<Set<String>> comparing_node = backtraceTable.getTable().get(level).get(node).keySet().iterator().next();
 
         result.append(prefix).append(isTail ? "└── " : "├── ")
                 .append("[")

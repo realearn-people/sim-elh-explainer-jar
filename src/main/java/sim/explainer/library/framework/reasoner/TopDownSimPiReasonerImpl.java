@@ -33,6 +33,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
     protected BacktraceTable backtraceTable = new BacktraceTable();
 
+    protected HashMap<String, String> mapper;
+
     public TopDownSimPiReasonerImpl(PreferenceProfile preferenceProfile) {
         this.preferenceProfile = preferenceProfile;
     }
@@ -273,10 +275,13 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
                 // TODO - concept check
                 if (node1Child.equals(causeMaxExi2)) { // same concept
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                    System.out.println(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                 } else if (causeMaxExi2 != null) { // diff concept
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
-                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.toString()));
+                    System.out.println(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
+                    System.out.println(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
+                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
                 }
 
                 BigDecimal weightedRoleVal = roleImportance.multiply(max);
@@ -400,13 +405,14 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
     }
 
     @Override
-    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
+    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2, HashMap<String, String> mapper) {
         if (tree1 == null || tree2 == null || preferenceProfile == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1["
                     + tree1 + "] and tree2[" + tree2 + " are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
 
         this.backtraceTable = new BacktraceTable();
+        this.mapper = mapper;
 
         TreeNode<Set<String>> rootTree1 = tree1.getNodes().get(0);
         TreeNode<Set<String>> rootTree2 = tree2.getNodes().get(0);

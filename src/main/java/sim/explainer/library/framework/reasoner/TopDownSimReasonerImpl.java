@@ -19,10 +19,7 @@ import sim.explainer.library.util.TimeUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component("topDownSimReasonerImpl")
 public class TopDownSimReasonerImpl implements IReasoner {
@@ -37,6 +34,8 @@ public class TopDownSimReasonerImpl implements IReasoner {
     private List<DateTime> markedTime = new ArrayList<DateTime>();
 
     protected BacktraceTable backtraceTable = new BacktraceTable();
+
+    protected HashMap<String, String> mapper;
 
     public TopDownSimReasonerImpl(PreferenceProfile preferenceProfile) {
         this.preferenceProfile = preferenceProfile;
@@ -158,11 +157,12 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
                 // TODO - concept check
                 if (node1Child.equals(causeMaxExi2)) { // same concept
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                 } else if (causeMaxExi2 != null) { // diff concept
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.toString()));
-                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.toString()));
+                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
+                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
                 }
+
 
                 sum = sum.add(max);
             }
@@ -249,13 +249,14 @@ public class TopDownSimReasonerImpl implements IReasoner {
     }
 
     @Override
-    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
+    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2, HashMap<String, String> mapper) {
         if (tree1 == null || tree2 == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1[" + tree1 + "] " +
                     "and tree2[" + tree2 + "] are null.", ErrorCode.TopDownSimReasonerImpl_IllegalArguments);
         }
 
         this.backtraceTable = new BacktraceTable();
+        this.mapper = mapper;
 
         TreeNode<Set<String>> rootTree1 = tree1.getNodes().get(0);
         TreeNode<Set<String>> rootTree2 = tree2.getNodes().get(0);

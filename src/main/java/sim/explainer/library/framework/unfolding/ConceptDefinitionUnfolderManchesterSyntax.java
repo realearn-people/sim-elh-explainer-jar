@@ -3,7 +3,6 @@ package sim.explainer.library.framework.unfolding;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sim.explainer.library.enumeration.OWLConstant;
 import sim.explainer.library.exception.ErrorCode;
@@ -12,6 +11,9 @@ import sim.explainer.library.framework.OWLServiceContext;
 import sim.explainer.library.util.OWLConceptDefinitionUtil;
 import sim.explainer.library.util.ParserUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component("conceptDefinitionUnfolderManchesterSyntax")
 public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfolder {
 
@@ -19,8 +21,11 @@ public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfold
 
     private OWLServiceContext owlServiceContext;
 
+    private Map<String, String> unfoldedConceptMap;
+
     public ConceptDefinitionUnfolderManchesterSyntax(OWLServiceContext owlServiceContext) {
         this.owlServiceContext = owlServiceContext;
+        this.unfoldedConceptMap = new HashMap<>();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +98,9 @@ public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfold
                 conceptName = entireStringBuilder.toString();
 
                 lastIndex = conceptName.length();
+
+                // Add to the unfoldedConceptMap
+                unfoldedConceptMap.put(subConceptDefinition, subConcept);
             } else {
                 beginIndex += subConcept.length() + 1;
             }
@@ -128,5 +136,10 @@ public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfold
         );
 
         return (fullDefinition != null) ? unfold(fullDefinition) : conceptName;
+    }
+
+    // New method to get the unfolded concept map
+    public HashMap<String, String> getUnfoldedConceptMap() {
+        return new HashMap<>(unfoldedConceptMap);
     }
 }

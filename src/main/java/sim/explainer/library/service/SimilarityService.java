@@ -52,22 +52,23 @@ public class SimilarityService {
 
     public Tree<Set<String>> unfoldAndConstructTree(IConceptUnfolder iConceptUnfolder, String conceptName1) {
         String unfoldConceptName1 = iConceptUnfolder.unfoldConceptDefinitionString(conceptName1);
+        HashMap<String, String> mapper = iConceptUnfolder.getUnfoldedConceptMap();
 
         if (iConceptUnfolder instanceof ConceptDefinitionUnfolderManchesterSyntax) {
-            return treeBuilder.constructAccordingToManchesterSyntax(conceptName1, unfoldConceptName1);
+            return treeBuilder.constructAccordingToManchesterSyntax(mapper, conceptName1, unfoldConceptName1);
         }
 
         else {
-            return treeBuilder.constructAccordingToKRSSSyntax(conceptName1, unfoldConceptName1);
+            return treeBuilder.constructAccordingToKRSSSyntax(mapper, conceptName1, unfoldConceptName1);
         }
     }
 
-    private BigDecimal computeSimilarity(IReasoner iReasoner, IRoleUnfolder iRoleUnfolder, Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
+    private BigDecimal computeSimilarity(IConceptUnfolder iConceptUnfolder, IReasoner iReasoner, IRoleUnfolder iRoleUnfolder, Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
         iReasoner.setRoleUnfoldingStrategy(iRoleUnfolder);
 
-        BigDecimal forwardDistance = iReasoner.measureDirectedSimilarity(tree1, tree2);
+        BigDecimal forwardDistance = iReasoner.measureDirectedSimilarity(tree1, tree2, iConceptUnfolder.getUnfoldedConceptMap());
         this.backtraceTable_forward = iReasoner.getBacktraceTable();
-        BigDecimal backwardDistance = iReasoner.measureDirectedSimilarity(tree2, tree1);
+        BigDecimal backwardDistance = iReasoner.measureDirectedSimilarity(tree2, tree1, iConceptUnfolder.getUnfoldedConceptMap());
         this.backtraceTable_backward = iReasoner.getBacktraceTable();
 
         return forwardDistance.add(backwardDistance).divide(TWO);
@@ -119,7 +120,7 @@ public class SimilarityService {
         Tree<Set<String>> tree1 = unfoldAndConstructTree(conceptT, conceptName1);
         Tree<Set<String>> tree2 = unfoldAndConstructTree(conceptT, conceptName2);
 
-        result = computeSimilarity(reasonerT, roleUnfolderT, tree1, tree2);
+        result = computeSimilarity(conceptT, reasonerT, roleUnfolderT, tree1, tree2);
 
         return result;
     }

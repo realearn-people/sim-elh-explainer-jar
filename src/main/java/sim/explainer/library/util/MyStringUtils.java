@@ -2,6 +2,9 @@ package sim.explainer.library.util;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MyStringUtils {
 
     private static final String TREE_STR = "tree";
@@ -32,6 +35,30 @@ public class MyStringUtils {
         builder.append(conceptName);
 
         return builder.toString();
+    }
+
+    public static String mapConcepts(String unfoldedConceptDescription, HashMap<String, String> unfoldedConceptMap) {
+        // Initialize the result with the unfoldedConceptDescription
+        String result = unfoldedConceptDescription;
+
+        boolean changesMade;
+        do {
+            changesMade = false;
+
+            // Iterate through the map and replace occurrences in the result
+            for (Map.Entry<String, String> entry : unfoldedConceptMap.entrySet()) {
+                String unfoldedConcept = entry.getKey();
+                String originalConcept = entry.getValue();
+
+                if (result.contains(unfoldedConcept)) {
+                    result = result.replace(unfoldedConcept, originalConcept);
+                    changesMade = true;
+                }
+            }
+
+        } while (changesMade); // Loop until no changes are made
+
+        return result;
     }
 
 }

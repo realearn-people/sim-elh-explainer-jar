@@ -10,6 +10,9 @@ import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.KRSSServiceContext;
 import sim.explainer.library.util.ParserUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component("conceptDefinitionUnfolderKRSSSyntax")
 public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
 
@@ -20,14 +23,16 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
 
     private KRSSServiceContext krssServiceContext;
 
+    private Map<String, String> unfoldedConceptMap;
+
     public ConceptDefinitionUnfolderKRSSSyntax(KRSSServiceContext krssServiceContext) {
         this.krssServiceContext = krssServiceContext;
+        this.unfoldedConceptMap = new HashMap<>();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Private /////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     private String retrieveConceptDefinition(String concept) {
 
@@ -60,9 +65,7 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
             if (nextWhitespaceIndex > -1 && nextCloseParenthesisIndex > -1) {
                 if (nextWhitespaceIndex <= nextCloseParenthesisIndex) {
                     readingIndex = nextWhitespaceIndex;
-                }
-
-                else {
+                } else {
                     readingIndex = nextCloseParenthesisIndex;
                 }
             }
@@ -93,9 +96,7 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
             if (subConcept.equals("and")) {
                 beginIndex += LENGTH_AND + 1;
                 continue;
-            }
-
-            else if (subConcept.equals("some")) {
+            } else if (subConcept.equals("some")) {
                 isPreviousReadingSome = true;
                 beginIndex += LENGTH_SOME + 1;
                 continue;
@@ -103,7 +104,7 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
 
             String subConceptDefinition = retrieveConceptDefinition(subConcept);
 
-            if(subConceptDefinition != null) {
+            if (subConceptDefinition != null) {
                 String beforeSubConceptIncludingSelf = StringUtils.substring(conceptName, 0, beginIndex);
                 String afterSubConceptIncludingSelf = StringUtils.substring(conceptName, beginIndex, conceptName.length());
 
@@ -114,10 +115,10 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
                 conceptName = entireStringBuilder.toString();
 
                 lastIndex = conceptName.length();
-            }
 
-            // Otherwise,
-            else {
+                // Add to the unfoldedConceptMap
+                unfoldedConceptMap.put(subConceptDefinition, subConcept);
+            } else {
                 beginIndex += subConcept.length() + 1;
             }
         }
@@ -143,5 +144,10 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
         String conceptDefinition = retrieveConceptDefinition(conceptName);
 
         return (conceptDefinition != null) ? unfold(conceptDefinition) : conceptName;
+    }
+
+    // New method to get the unfolded concept map
+    public HashMap<String, String> getUnfoldedConceptMap() {
+        return new HashMap<>(unfoldedConceptMap);
     }
 }
