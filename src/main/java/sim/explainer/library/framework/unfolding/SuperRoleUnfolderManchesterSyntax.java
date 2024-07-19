@@ -35,7 +35,9 @@ public class SuperRoleUnfolderManchesterSyntax implements IRoleUnfolder {
         }
 
         else {
-            roles.add(ParserUtils.generateFreshName(owlObjectProperty.getIRI().getFragment()));
+            // TODO - remove fresh name
+//            roles.add(ParserUtils.generateFreshName(owlObjectProperty.getIRI().getFragment()));
+            roles.add(owlObjectProperty.getIRI().getFragment());
 
             for (OWLObjectPropertyExpression propertyExpression : owlObjectPropertyExpressions) {
                 OWLObjectProperty superObjectProperty = propertyExpression.asOWLObjectProperty();

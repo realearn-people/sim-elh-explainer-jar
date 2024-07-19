@@ -54,7 +54,7 @@ public class SimExplainer {
                         String fileName = file.getFileName().toString();
                         String fileAbsPath = file.toAbsolutePath().toString();
 
-                        if (fileName.endsWith(".krss") || fileName.endsWith(".owl")) {
+                        if (fileName.endsWith(".krss") || fileName.endsWith(".owl") || fileName.endsWith(".owx")) {
                             load_ontology(fileAbsPath);
                         }
 
@@ -89,7 +89,7 @@ public class SimExplainer {
                         String fileName = file.getFileName().toString();
                         String fileAbsPath = file.toAbsolutePath().toString();
 
-                        if (fileName.endsWith(".krss") || fileName.endsWith(".owl")) {
+                        if (fileName.endsWith(".krss") || fileName.endsWith(".owl") || fileName.endsWith(".owx")) {
                             load_ontology(fileAbsPath);
                         }
                     });
@@ -330,7 +330,7 @@ public class SimExplainer {
         return explanation;
     }
 
-    class Explanation {
+    static class Explanation {
         public String forward;
         public String backward;
     }

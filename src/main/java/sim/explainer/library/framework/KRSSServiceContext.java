@@ -151,7 +151,9 @@ public class KRSSServiceContext {
                         "duplicated defined primitive role name[" + name + "].", ErrorCode.KRSSServiceContext_NotDefinatorialTBoxException);
             }
 
-            String freshName = ParserUtils.generateFreshName(name);
+            // TODO - remove fresh name
+//            String freshName = ParserUtils.generateFreshName(name);
+            String freshName = name;
 
             StringBuilder builder = new StringBuilder("(and");
             builder.append(StringUtils.SPACE);

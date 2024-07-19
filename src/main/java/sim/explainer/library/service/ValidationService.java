@@ -98,7 +98,7 @@ public class ValidationService {
     }
 
     public static FileTypeConstant checkOWLandKRSSFile(File file) {
-        if (file.getName().endsWith(".owl")) {
+        if (file.getName().endsWith(".owl") || file.getName().endsWith(".owx")) {
             return FileTypeConstant.OWL_FILE;
         } else if (file.getName().endsWith(".krss")) {
             return FileTypeConstant.KRSS_FILE;

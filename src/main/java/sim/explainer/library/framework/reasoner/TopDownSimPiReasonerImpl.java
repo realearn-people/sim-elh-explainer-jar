@@ -275,11 +275,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
                 // TODO - concept check
                 if (node1Child.equals(causeMaxExi2)) { // same concept
-                    System.out.println(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                     record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                 } else if (causeMaxExi2 != null) { // diff concept
-                    System.out.println(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
-                    System.out.println(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
                     record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                     record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
                 }

@@ -55,9 +55,15 @@ public class SuperRoleUnfolderKRSSSyntax implements IRoleUnfolder {
         superRoleHandlerChain.invoke(context);
 
         Set<String> roleSet = context.getPrimitiveConceptSet();
+        // TODO - remove fresh name
+        roleSet.remove(role);
 
-        if (roleSet.size() == 1) {
+//        if (roleSet.size() == 1) {
+        // TODO - remove fresh name
+        if (roleSet.size() == 0) {
             superRoles.add(role);
+            // TODO - remove fresh name
+            superRoles.addAll(roleSet);
         }
 
         else {
@@ -65,6 +71,9 @@ public class SuperRoleUnfolderKRSSSyntax implements IRoleUnfolder {
                 unfold(roleName, superRoles);
             }
         }
+
+        // TODO - remove fresh name
+        superRoles.add(role);
 
         return superRoles;
     }
