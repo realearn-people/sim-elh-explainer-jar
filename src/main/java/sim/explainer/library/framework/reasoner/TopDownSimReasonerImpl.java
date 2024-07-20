@@ -145,20 +145,26 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
                 BigDecimal max = BigDecimal.ZERO;
 
+                SimRecord tmp_record1 = new SimRecord(); // use for capture which embedding set is derive "current" max ehd_value
+
                 for (TreeNode<Set<String>> node2Child : node2Children) {
 
-                    BigDecimal ehdValue = eHd(level, record, node1Child, node2Child);
+                    SimRecord tmp_record2 = new SimRecord(); // use for capture which embedding set is derive "current" max ehd_value
+
+                    BigDecimal ehdValue = eHd(level, tmp_record2, node1Child, node2Child);
 
                     if (max.compareTo(ehdValue) < 0) {
                         max = ehdValue;
                         causeMaxExi2 = node2Child;
+                        tmp_record1.setEmb(tmp_record2.getEmb());
                     }
                 }
 
                 // TODO - concept check
-                if (node1Child.equals(causeMaxExi2)) { // same concept
+                if (causeMaxExi2 != null && node1Child.getConceptName().equals(causeMaxExi2.getConceptName())) { // same concept
                     record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                 } else if (causeMaxExi2 != null) { // diff concept
+                    record.setEmb(tmp_record1.getEmb());
                     record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
                     record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
                 }

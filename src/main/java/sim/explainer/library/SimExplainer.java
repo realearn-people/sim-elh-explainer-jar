@@ -1,9 +1,11 @@
 package sim.explainer.library;
 
+import com.theokanning.openai.service.OpenAiService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
+import org.springframework.beans.factory.annotation.Value;
 import sim.explainer.library.controller.KRSSSimilarityController;
 import sim.explainer.library.controller.OWLSimilarityController;
 import sim.explainer.library.enumeration.FileTypeConstant;
@@ -31,18 +33,17 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class SimExplainer {
-    private File ontologyFile;
     private FileTypeConstant fileType;
 
-    private PreferenceProfile preferenceProfile = new PreferenceProfile();
+    private final PreferenceProfile preferenceProfile = new PreferenceProfile();
 
-    OWLServiceContext owlServiceContext = new OWLServiceContext();
-    KRSSServiceContext krssServiceContext = new KRSSServiceContext();
+    private final OWLServiceContext owlServiceContext = new OWLServiceContext();
+    private final KRSSServiceContext krssServiceContext = new KRSSServiceContext();
 
-    SimilarityService similarityService = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
-    ValidationService validationService = new ValidationService(owlServiceContext, krssServiceContext);
+    private final SimilarityService similarityService = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
+    private final ValidationService validationService = new ValidationService(owlServiceContext, krssServiceContext);
 
-    private HashMap<String, HashMap<String, ExplanationService>> explanationMap = new HashMap<>();
+    private final HashMap<String, HashMap<String, ExplanationService>> explanationMap = new HashMap<>();
 
     public SimExplainer(String directoryPath) {
         Path onto_dir = Paths.get(directoryPath);
@@ -167,9 +168,9 @@ public class SimExplainer {
     }
 
     private void load_ontology(String ontologyPath) {
-        this.ontologyFile = new File(ontologyPath);
+        File ontologyFile = new File(ontologyPath);
 
-        this.fileType = ValidationService.checkOWLandKRSSFile(this.ontologyFile);
+        this.fileType = ValidationService.checkOWLandKRSSFile(ontologyFile);
 
         switch (fileType) {
             case OWL_FILE:

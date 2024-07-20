@@ -51,6 +51,10 @@ public class SimRecord {
         this.emb.add(emb);
     }
 
+    public void setEmb(HashSet<String> emb) {
+        this.emb = emb;
+    }
+
     @Override
     public String toString() {
         return "SimRecord{" +
