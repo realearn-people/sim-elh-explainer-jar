@@ -14,6 +14,7 @@ import sim.explainer.library.framework.unfolding.IRoleUnfolder;
 import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.util.MyStringUtils;
 import sim.explainer.library.util.TimeUtils;
+import sim.explainer.library.util.utilstructure.SymmetricPair;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -203,10 +204,10 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
                 // TODO - concept check
                 if (primitiveNode1.equals(causeMaxPri2)) { // same concept
-                    record.appendPri(primitiveNode1);
+                    record.appendPri(primitiveNode1, causeMaxPri2);
                 } else if (!causeMaxPri2.equals("")) { // diff concept
-                    record.appendEmb(primitiveNode1);
-                    record.appendEmb(causeMaxPri2);
+                    record.appendPri(primitiveNode1, causeMaxPri2);
+                    record.appendEmb(primitiveNode1, causeMaxPri2, primitiveNode1, causeMaxPri2);
                 }
 
                 BigDecimal importance = primitiveConceptImportance.get(primitiveNode1);
@@ -254,18 +255,18 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
                 BigDecimal max = BigDecimal.ZERO;
 
-                SimRecord tmp_record1 = new SimRecord(); // use for capture which embedding set is derive "current" max ehd_value
+                HashSet<SymmetricPair<String>> maxSet_emb = new HashSet<>(); // use for capture which embedding set is derive "current" max ehd_value
 
                 for (TreeNode<Set<String>> node2Child : node2Children) {
 
-                    SimRecord tmp_record2 = new SimRecord(); // use for capture which embedding set is derive "current" max ehd_value
+                    HashSet<SymmetricPair<String>> tmp_emb = new HashSet<>(); // use for capture which embedding set is derive "current" max ehd_value
 
-                    BigDecimal ehdPiValue = eHdPi(level, tmp_record2, node1Child, node2Child);
+                    BigDecimal ehdPiValue = eHdPi(level, tmp_emb, node1Child, node2Child);
 
                     if (max.compareTo(ehdPiValue) < 0) {
                         max = ehdPiValue;
                         causeMaxExi2 = node2Child;
-                        tmp_record1.setEmb(tmp_record2.getEmb());
+                        maxSet_emb = tmp_emb;
                     }
                 }
 
@@ -279,12 +280,24 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
                 }
 
                 // TODO - concept check
+                SymmetricPair<String> key = new SymmetricPair<>(
+                        MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)),
+                        MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper))
+                );
+
                 if (causeMaxExi2 != null && node1Child.getConceptName().equals(causeMaxExi2.getConceptName())) { // same concept
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
+                    record.appendExi(
+                            key.getFirst(),
+                            key.getSecond()
+                    );
                 } else if (causeMaxExi2 != null) { // diff concept
-                    record.setEmb(tmp_record1.getEmb());
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
-                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
+
+                    record.appendEmb(key.getFirst(), key.getSecond(), maxSet_emb);
+
+                    record.appendExi(
+                            key.getFirst(),
+                            key.getSecond()
+                    );
                 }
 
                 BigDecimal weightedRoleVal = roleImportance.multiply(max);
@@ -302,7 +315,7 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
         }
     }
 
-    protected BigDecimal eHdPi(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eHdPi(int level, HashSet<SymmetricPair<String>> record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to e hd pi as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
@@ -320,7 +333,7 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
         return nuPrime.multiply(simSubTree).add(discountFactor).multiply(gammaPiVal);
     }
 
-    protected BigDecimal gammaPi(SimRecord record, String edge1, String edge2) {
+    protected BigDecimal gammaPi(HashSet<SymmetricPair<String>> record, String edge1, String edge2) {
         if (edge1 == null || edge2 == null) {
             throw new JSimPiException("Unable to gamma pi as edge1[" + edge1 + "] and edge2[" + edge2 + "] are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
@@ -371,11 +384,12 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
                 }
 
                 // TODO - concept check
-                if (role1.equals(causeMaxRole2)) { // same concept
-                    record.appendEmb(causeMaxRole2);
-                } else if (!causeMaxRole2.equals("")) { // diff concept
-                    record.appendEmb(role1);
-                    record.appendEmb(causeMaxRole2);
+                if (role1.equals(causeMaxRole2)) { // same role
+                    SymmetricPair<String> pair = new SymmetricPair<>(role1, causeMaxRole2);
+                    record.add(pair);
+                } else if (!causeMaxRole2.equals("")) { // diff role
+                    SymmetricPair<String> pair = new SymmetricPair<>(role1, causeMaxRole2);
+                    record.add(pair);
                 }
 
                 BigDecimal importance = roleImportance.get(role1);

@@ -110,7 +110,7 @@ public class TopDownSimReasonerImpl implements IReasoner {
             BigDecimal divisor = new BigDecimal(builder2.toString());
 
             for (String data: common) {
-                record.appendPri(data);
+                record.appendPri(data, data);
             }
 
             return numerator.divide(divisor, 5, BigDecimal.ROUND_HALF_UP);
@@ -162,11 +162,16 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
                 // TODO - concept check
                 if (causeMaxExi2 != null && node1Child.getConceptName().equals(causeMaxExi2.getConceptName())) { // same concept
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
+                    record.appendExi(
+                            MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)),
+                            MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper))
+                    );
                 } else if (causeMaxExi2 != null) { // diff concept
                     record.setEmb(tmp_record1.getEmb());
-                    record.appendExi(MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)));
-                    record.appendExi(MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper)));
+                    record.appendExi(
+                            MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)),
+                            MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper))
+                    );
                 }
 
 
@@ -233,10 +238,6 @@ public class TopDownSimReasonerImpl implements IReasoner {
 
         StrBuilder builder2 = new StrBuilder().append(edgeSet1.size());
         BigDecimal divisor = new BigDecimal(builder2.toString());
-
-        for (String edge : intersection) {
-            record.appendExi(edge);
-        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("gamma: numerator[" + numerator + "], divisor[" + divisor + "].");

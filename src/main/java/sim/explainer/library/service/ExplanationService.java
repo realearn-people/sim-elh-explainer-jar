@@ -1,14 +1,21 @@
 package sim.explainer.library.service;
 
+import org.json.JSONArray;
 import sim.explainer.library.enumeration.ReasoningDirectionConstant;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
 import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.explainer.SimRecord;
+import sim.explainer.library.util.utilstructure.SymmetricPair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.json.JSONObject;
 
 public class ExplanationService {
     private BacktraceTable forwardBacktraceTable;
@@ -115,5 +122,51 @@ public class ExplanationService {
         if (node.getChildren().size() > 0) {
             buildExplanationTreeAscii(backtraceTable, node.getChildren().get(node.getChildren().size() - 1), result, prefix + (isTail ? "    " : "│   "), true, level + 1);
         }
+    }
+
+    public JSONObject explanationTreeAsJson(ReasoningDirectionConstant direction) {
+        BacktraceTable backtraceTable;
+        if (direction.equals(ReasoningDirectionConstant.FORWARD)) {
+            backtraceTable = forwardBacktraceTable;
+        } else {
+            backtraceTable = backwardBacktraceTable;
+        }
+
+        HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap = backtraceTable.getTable().get(0);
+        if (levelMap == null || levelMap.isEmpty()) {
+            return new JSONObject().put("error", "No data available at level 0.");
+        }
+
+        // Assuming there is always one root node
+        TreeNode<Set<String>> root = levelMap.keySet().iterator().next();
+        return buildExplanationTreeAsJson(backtraceTable, root, 0);
+    }
+
+    private JSONObject buildExplanationTreeAsJson(BacktraceTable backtraceTable, TreeNode<Set<String>> node, int level) {
+        if (!backtraceTable.getTable().containsKey(level)) {
+            return null;
+        }
+
+        TreeNode<Set<String>> comparingNode = backtraceTable.getTable().get(level).get(node).keySet().iterator().next();
+        SimRecord simRecord = backtraceTable.getTable().get(level).get(node).get(comparingNode);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("comparingConcept1", node.getConceptName());
+        jsonObject.put("comparingConcept2", comparingNode.getConceptName());
+        jsonObject.put("deg", simRecord.getDeg());
+        jsonObject.put("pri", new JSONArray(simRecord.getPri().stream().map(SymmetricPair::toString).collect(Collectors.toList())));
+        jsonObject.put("exi", new JSONArray(simRecord.getExi().stream().map(SymmetricPair::toString).collect(Collectors.toList())));
+        jsonObject.put("emb", new JSONObject(simRecord.getEmb()));
+
+        List<JSONObject> childrenJson = new ArrayList<>();
+        for (TreeNode<Set<String>> child : node.getChildren()) {
+            JSONObject childJson = buildExplanationTreeAsJson(backtraceTable, child, level + 1);
+            if (childJson != null) {
+                childrenJson.add(childJson);
+            }
+        }
+
+        jsonObject.put("children", childrenJson);
+        return jsonObject;
     }
 }

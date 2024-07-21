@@ -3,6 +3,7 @@ package sim.explainer.library;
 import com.theokanning.openai.service.OpenAiService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 import org.semanticweb.owlapi.util.ShortFormProvider;
 import org.semanticweb.owlapi.util.SimpleShortFormProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -334,6 +335,28 @@ public class SimExplainer {
     static class Explanation {
         public String forward;
         public String backward;
+    }
+
+    public JSONObject getExplanationAsJson(String concept1, String concept2) {
+        if (concept1 == null || concept2 == null) {
+            throw new JSimPiException("Concept not provided", ErrorCode.Application_IllegalArguments);
+        }
+
+        if (!explanationMap.containsKey(concept1)) {
+            throw new JSimPiException("The concept [" + concept1 + "] has not been calculated for similarity yet.", ErrorCode.Application_IllegalArguments);
+        }
+        if (!explanationMap.containsKey(concept2)) {
+            throw new JSimPiException("The concept [" + concept2 + "] has not been calculated for similarity yet.", ErrorCode.Application_IllegalArguments);
+        }
+        if (!explanationMap.get(concept1).containsKey(concept2)) {
+            throw new JSimPiException("No calculated similarity between [" + concept1 + "] and [" + concept2 + "] yet.", ErrorCode.Application_IllegalArguments);
+        }
+
+        JSONObject explanation = new JSONObject();
+        explanation.put("forward", explanationMap.get(concept1).get(concept2).explanationTreeAsJson(ReasoningDirectionConstant.FORWARD));
+        explanation.put("backward", explanationMap.get(concept1).get(concept2).explanationTreeAsJson(ReasoningDirectionConstant.BACKWARD));
+
+        return explanation;
     }
 
     public List<String> retrieveConceptName() {
