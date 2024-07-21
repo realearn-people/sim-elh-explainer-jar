@@ -9,6 +9,7 @@ import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.util.utilstructure.SymmetricPair;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,10 +19,12 @@ import java.util.stream.Collectors;
 import org.json.JSONObject;
 
 public class ExplanationService {
+    private BigDecimal similarity;
     private BacktraceTable forwardBacktraceTable;
     private BacktraceTable backwardBacktraceTable;
 
-    public ExplanationService(BacktraceTable forwardBacktraceTable, BacktraceTable backwardBacktraceTable) {
+    public ExplanationService(BigDecimal similarity, BacktraceTable forwardBacktraceTable, BacktraceTable backwardBacktraceTable) {
+        this.similarity = similarity;
         this.forwardBacktraceTable = forwardBacktraceTable;
         this.backwardBacktraceTable = backwardBacktraceTable;
     }
@@ -168,5 +171,9 @@ public class ExplanationService {
 
         jsonObject.put("children", childrenJson);
         return jsonObject;
+    }
+
+    public BigDecimal getSimilarity() {
+        return similarity;
     }
 }

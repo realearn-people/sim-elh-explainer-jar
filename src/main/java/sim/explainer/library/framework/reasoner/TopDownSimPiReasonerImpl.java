@@ -280,19 +280,15 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
                 }
 
                 // TODO - concept check
-                SymmetricPair<String> key = new SymmetricPair<>(
-                        MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)),
-                        MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper))
-                );
-
-                if (causeMaxExi2 != null && node1Child.getConceptName().equals(causeMaxExi2.getConceptName())) { // same concept
-                    record.appendExi(
-                            key.getFirst(),
-                            key.getSecond()
+                if (causeMaxExi2 != null) {
+                    SymmetricPair<String> key = new SymmetricPair<>(
+                            MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)),
+                            MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper))
                     );
-                } else if (causeMaxExi2 != null) { // diff concept
 
-                    record.appendEmb(key.getFirst(), key.getSecond(), maxSet_emb);
+                    if (!node1Child.getConceptName().equals(causeMaxExi2.getConceptName())) {
+                        record.appendEmb(key.getFirst(), key.getSecond(), maxSet_emb);
+                    }
 
                     record.appendExi(
                             key.getFirst(),

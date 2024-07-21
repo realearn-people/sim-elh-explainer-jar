@@ -238,6 +238,7 @@ public class PreferenceProfile {
         this.primitiveConceptsSimilarity.clear();
         this.primitiveRolesSimilarity.clear();
         this.roleDiscountFactor.clear();
+        this.defaultRoleDiscountFactor = BigDecimal.valueOf(0.4);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

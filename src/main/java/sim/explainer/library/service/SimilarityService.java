@@ -1,7 +1,7 @@
 package sim.explainer.library.service;
 
 import sim.explainer.library.enumeration.FileTypeConstant;
-import sim.explainer.library.enumeration.TypeConstant;
+import sim.explainer.library.enumeration.ImplementationMethod;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.explainer.BacktraceTable;
@@ -83,7 +83,7 @@ public class SimilarityService {
      * @param conceptType  measurement type, i.e., dynamic/top down and sim/simpi
      * @return similarity degree of that concept pair
      */
-    public BigDecimal measureConceptWithType(String conceptName1, String conceptName2, TypeConstant measurementType, FileTypeConstant conceptType) {
+    public BigDecimal measureConceptWithType(String conceptName1, String conceptName2, ImplementationMethod measurementType, FileTypeConstant conceptType) {
 
         IConceptUnfolder conceptT;
         IRoleUnfolder roleUnfolderT;
@@ -105,13 +105,13 @@ public class SimilarityService {
             throw new JSimPiException("Unable measure with this file type.", ErrorCode.OWLSimService_IllegalArguments);
         }
 
-        if (measurementType == TypeConstant.DYNAMIC_SIM) {
+        if (measurementType == ImplementationMethod.DYNAMIC_SIM) {
             reasonerT = dynamicProgrammingSimReasonerImpl;
-        } else if (measurementType == TypeConstant.DYNAMIC_SIMPI) {
+        } else if (measurementType == ImplementationMethod.DYNAMIC_SIMPI) {
             reasonerT = dynamicProgrammingSimPiReasonerImpl;
-        } else if (measurementType == TypeConstant.TOPDOWN_SIM) {
+        } else if (measurementType == ImplementationMethod.TOPDOWN_SIM) {
             reasonerT = topDownSimReasonerImpl;
-        } else if (measurementType == TypeConstant.TOPDOWN_SIMPI) {
+        } else if (measurementType == ImplementationMethod.TOPDOWN_SIMPI) {
             reasonerT = topDownSimPiReasonerImpl;
         } else {
             throw new JSimPiException("Unable measure with this approach.", ErrorCode.OWLSimService_IllegalArguments);

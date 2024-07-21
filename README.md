@@ -76,7 +76,7 @@ To use the `SimExplainer` library, follow these steps:
     System.out.println("Similarity: " + similarity);
     ```
 
-    The `TypeConstant` enum consists of the following constants:
+    The `ImplementationMethod` enum consists of the following constants:
     
    - `DYNAMIC_SIM`: dynamic programming Sim
    - `DYNAMIC_SIMPI`: dynamic programming SimPi
@@ -96,10 +96,26 @@ To use the `SimExplainer` library, follow these steps:
     This retrieves the explanation for the similarity measurement between two concepts.
     ```java
     SimExplainer.Explanation explanation = explainer.getExplanation("Concept1", "Concept2");
+    System.out.println("Similarity Degree: " + explanation.similarity);
     System.out.println("Forward Explanation: " + explanation.forward);
     System.out.println("Backward Explanation: " + explanation.backward);
     ```
 
+6. **Retrieve Explanation as JSON**
+
+   This retrieves the explanation as a JSON object.
+   ```java
+   JSONObject explanationJson = explainer.getExplanationAsJson("Concept1", "Concept2");
+   System.out.println(explanationJson.toString(4));
+   ```
+
+   **Save Explanation as JSON**
+   This saves the explanation as a JSON file.
+
+   ```java
+   JSONObject explanationJson = explainer.getExplanationAsJson("Concept1", "Concept2", "path/to/outputFile.json");
+   System.out.println(explanationJson.toString(4));
+   ```
 ## Publications
 
 - Teeradaj Racharak, "On Approximation of Concept Similarity Measure in Description Logic ELH with Pre-trained Word Embedding," In IEEE Access, vol. 9, pp. 61429-61443, 2021. DOI: 10.1109/ACCESS.2021.3073730

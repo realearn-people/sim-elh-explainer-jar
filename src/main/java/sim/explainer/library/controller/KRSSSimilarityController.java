@@ -4,7 +4,7 @@ import sim.explainer.library.enumeration.FileTypeConstant;
 import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.service.SimilarityService;
 import org.springframework.stereotype.Controller;
-import sim.explainer.library.enumeration.TypeConstant;
+import sim.explainer.library.enumeration.ImplementationMethod;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.service.ValidationService;
@@ -40,7 +40,7 @@ public class KRSSSimilarityController {
      * @return similarity degree of that concept pair
      * @return
      */
-    public BigDecimal measureSimilarity(String conceptName1, String conceptName2, TypeConstant type, FileTypeConstant conceptType) {
+    public BigDecimal measureSimilarity(String conceptName1, String conceptName2, ImplementationMethod type, FileTypeConstant conceptType) {
         if(conceptName1 == null || conceptName2 == null) {
             throw new JSimPiException("Unable to measure similarity with " + type.getDescription() + " as conceptName1[" + conceptName1
                     + "] and conceptName2[" + conceptName2 + "] are null.",
