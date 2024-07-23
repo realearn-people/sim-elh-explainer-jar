@@ -196,7 +196,7 @@ public class ExplanationService {
 
         // Assuming there is always one root node
         TreeNode<Set<String>> root = levelMap.keySet().iterator().next();
-        return ExplanationConverterService.convertExplanation(buildExplanationTreeAsJson(backtraceTable, root, 0));
+        return ExplanationConverterService.convertExplanationWholeTree(buildExplanationTreeAsJson(backtraceTable, root, 0));
     }
 
     public JSONObject explanationTreeAsJson(ReasoningDirectionConstant direction) {

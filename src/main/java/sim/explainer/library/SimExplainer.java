@@ -409,15 +409,7 @@ public class SimExplainer {
     public JSONObject getExplantionAsNaturalLanguage(String concept1, String concept2) {
         JSONObject explanation = getExplanationAsJson(concept1, concept2);
 
-        JSONObject forward_explanation = ExplanationConverterService.convertExplanation(explanation.getJSONObject("forward"));
-        JSONObject backward_explanation = ExplanationConverterService.convertExplanation(explanation.getJSONObject("backward"));
-
-        JSONObject result = new JSONObject();
-        result.put("similarity", explanation.getBigDecimal("similarity"));
-        result.put("forward", forward_explanation);
-        result.put("backward", backward_explanation);
-
-        return result;
+        return ExplanationConverterService.convertExplanationBiDirectionTree(explanation);
     }
 
     public JSONObject getExplantionAsNaturalLanguage(String concept1, String concept2, String outputPath) {
