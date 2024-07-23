@@ -12,13 +12,16 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The {@code ExplanationConverterService} class provides methods to convert explanations between concepts
+ * into natural language using the OpenAI API. It supports converting explanations for subtrees, whole trees,
+ * and bidirectional trees.
+ */
 @Service
 public class ExplanationConverterService {
     private static OpenAiService openAiService = null;
     private static int apiTimeout = 45;
-
     private static String apiKey;
-
     private static final String GPT_MODEL = "gpt-4o-mini";
 
     private static final String SYSTEM_SUBTREE_MESSAGE = """
@@ -157,9 +160,17 @@ public class ExplanationConverterService {
             Don't add anything else in the end after you respond with explanation.
             """;
 
+    /**
+     * Default constructor for the {@code ExplanationConverterService} class.
+     */
     public ExplanationConverterService() {
     }
 
+    /**
+     * Constructs an {@code ExplanationConverterService} object with the specified API key.
+     *
+     * @param apiKey the OpenAI API key
+     */
     public ExplanationConverterService(String apiKey) {
         this.apiKey = apiKey;
 
@@ -167,6 +178,11 @@ public class ExplanationConverterService {
         System.out.println("Connected to OpenAI!");
     }
 
+    /**
+     * Sets the API timeout for the OpenAI service.
+     *
+     * @param apiTimeout the API timeout in seconds
+     */
     public void setApiTimeout(int apiTimeout) {
         ExplanationConverterService.apiTimeout = apiTimeout;
 
@@ -174,6 +190,11 @@ public class ExplanationConverterService {
         System.out.println("Connected to OpenAI!");
     }
 
+    /**
+     * Sets the API key for the OpenAI service.
+     *
+     * @param apiKey the OpenAI API key
+     */
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
 
@@ -181,6 +202,12 @@ public class ExplanationConverterService {
         System.out.println("Connected to OpenAI!");
     }
 
+    /**
+     * Converts a subtree explanation into natural language using the OpenAI API.
+     *
+     * @param explanation the explanation in JSON format
+     * @return the converted explanation in JSON format
+     */
     public static JSONObject convertExplanationSubtree(JSONObject explanation) {
         JSONObject result = new JSONObject();
 
@@ -206,6 +233,12 @@ public class ExplanationConverterService {
         return result;
     }
 
+    /**
+     * Converts a whole tree explanation into natural language using the OpenAI API.
+     *
+     * @param explanation the explanation in JSON format
+     * @return the converted explanation in JSON format
+     */
     public static JSONObject convertExplanationWholeTree(JSONObject explanation) {
         JSONObject explanationSubtree = convertExplanationSubtree(explanation);
 
@@ -218,6 +251,12 @@ public class ExplanationConverterService {
         return result;
     }
 
+    /**
+     * Converts a bidirectional tree explanation into natural language using the OpenAI API.
+     *
+     * @param explanation the explanation in JSON format
+     * @return the converted explanation in JSON format
+     */
     public static JSONObject convertExplanationBiDirectionTree(JSONObject explanation) {
         JSONObject forward_explanation = ExplanationConverterService.convertExplanationWholeTree(explanation.getJSONObject("forward"));
         JSONObject backward_explanation = ExplanationConverterService.convertExplanationWholeTree(explanation.getJSONObject("backward"));
@@ -232,9 +271,16 @@ public class ExplanationConverterService {
         result.put("explanation", response);
 
         return result;
-
     }
 
+    /**
+     * Sends a message to the OpenAI API and retrieves the response.
+     *
+     * @param system_message the system message to send
+     * @param message the user message to send
+     * @return the response from the OpenAI API
+     * @throws JSimPiException if the OpenAI API key is not provided
+     */
     private static String sendMessage(String system_message, String message) {
         if (openAiService == null) {
             throw new JSimPiException("Please Provide an OpenAI API Key.", ErrorCode.ExplanationConverterService_NoConfiguration);
