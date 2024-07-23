@@ -12,10 +12,7 @@ import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.util.utilstructure.SymmetricPair;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.json.JSONObject;
@@ -81,6 +78,60 @@ public class ExplanationService {
         if (node.getChildren().size() > 0) {
             buildTreeAscii(node.getChildren().get(node.getChildren().size() - 1), result, prefix + (isTail ? "    " : "│   "), true);
         }
+    }
+
+    public JSONObject treeHierarchyAsJson(String concept) {
+        TreeNode<Set<String>> root = null;
+
+        for (HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap : forwardBacktraceTable.getTable().values()) {
+            for (TreeNode<Set<String>> treeNode : levelMap.keySet()) {
+                if (treeNode.getConceptName().equals(concept)) {
+                    root = treeNode;
+                    break;
+                }
+            }
+            if (root != null) {
+                break;
+            }
+        }
+
+        for (HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap : backwardBacktraceTable.getTable().values()) {
+            for (TreeNode<Set<String>> treeNode : levelMap.keySet()) {
+                if (treeNode.getConceptName().equals(concept)) {
+                    root = treeNode;
+                    break;
+                }
+            }
+            if (root != null) {
+                break;
+            }
+        }
+
+        if (root == null) {
+            throw new JSimPiException("Tree not found", ErrorCode.Application_IllegalArguments);
+        }
+
+        return buildTreeHierarchyAsJson(root);
+    }
+
+    private JSONObject buildTreeHierarchyAsJson(TreeNode<Set<String>> node) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("roleName", node.getEdgeToParent() == null ? null : node.getEdgeToParent());  // RoleName can be set to null or another value if applicable
+        jsonObject.put("conceptName", node.getConceptName());
+
+        // Primitive concepts can be added if applicable
+        // Assuming node.getData() returns a Set<String> of primitive concepts
+        JSONArray primitiveConcepts = new JSONArray(node.getData());
+        jsonObject.put("primitiveConcepts", primitiveConcepts);
+
+        // Existentials are the children of the current node
+        JSONArray existentials = new JSONArray();
+        for (TreeNode<Set<String>> child : node.getChildren()) {
+            existentials.put(buildTreeHierarchyAsJson(child));
+        }
+        jsonObject.put("existentials", existentials);
+
+        return jsonObject;
     }
 
     public String explanationTree(ReasoningDirectionConstant direction) {

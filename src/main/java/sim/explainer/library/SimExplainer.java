@@ -292,8 +292,8 @@ public class SimExplainer {
 
         StringBuilder builder = new StringBuilder();
 
-        for (String concept: concepts) {
-            for (Map.Entry<SymmetricPair<String>, ExplanationService> entry: explanationMap.entrySet()) {
+        for (String concept : concepts) {
+            for (Map.Entry<SymmetricPair<String>, ExplanationService> entry : explanationMap.entrySet()) {
                 ExplanationService explanationService = entry.getValue();
 
                 try {
@@ -306,6 +306,39 @@ public class SimExplainer {
         }
 
         return builder.toString();
+    }
+
+    public JSONObject treeHierachyAsJson(String concept) {
+        if (concept == null) {
+            throw new JSimPiException("Concept not provide", ErrorCode.Application_IllegalArguments);
+        }
+
+        JSONObject resultJson = new JSONObject();
+
+        for (Map.Entry<SymmetricPair<String>, ExplanationService> entry : explanationMap.entrySet()) {
+            ExplanationService explanationService = entry.getValue();
+
+            try {
+                return explanationService.treeHierarchyAsJson(concept);
+            } catch (JSimPiException e) {
+                throw new JSimPiException("[" + concept + "] have not been processed yet: " + e.toString(), ErrorCode.Application_IllegalArguments);
+            }
+        }
+
+        throw new JSimPiException("[" + concept + "] have not been processed yet", ErrorCode.Application_IllegalArguments);
+    }
+
+    public JSONObject treeHierachyAsJson(String concept, String outputPath) {
+        JSONObject jsonResult = treeHierachyAsJson(concept);
+
+        try (FileWriter file = new FileWriter(outputPath)) {
+            file.write(jsonResult.toString(4)); // Write JSON with indentation
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Handle the exception as needed
+        }
+
+        return jsonResult;
     }
 
     public Explanation getExplanation(String concept1, String concept2) {
