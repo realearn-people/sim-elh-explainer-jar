@@ -111,6 +111,9 @@ public class ExplanationService {
             throw new JSimPiException("Tree not found", ErrorCode.Application_IllegalArguments);
         }
 
+        root = root.copy();
+        root.setEdgeToParent(null);
+
         return buildTreeHierarchyAsJson(root);
     }
 
@@ -247,5 +250,13 @@ public class ExplanationService {
 
     public BigDecimal getSimilarity() {
         return similarity;
+    }
+
+    public BacktraceTable getBackwardBacktraceTable() {
+        return backwardBacktraceTable;
+    }
+
+    public BacktraceTable getForwardBacktraceTable() {
+        return forwardBacktraceTable;
     }
 }

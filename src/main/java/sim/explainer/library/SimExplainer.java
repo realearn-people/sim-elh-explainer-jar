@@ -300,7 +300,7 @@ public class SimExplainer {
                     builder.append(explanationService.treeHierarchy(concept));
                     break;
                 } catch (JSimPiException e) {
-                    throw new JSimPiException("[" + concept + "] have not been processed yet: " + e.toString(), ErrorCode.Application_IllegalArguments);
+                    // do nothing
                 }
             }
         }
@@ -352,10 +352,22 @@ public class SimExplainer {
             throw new JSimPiException("Have not been calculate similarity between [" + concept1 + "] and [" + concept2 + "]  yet.", ErrorCode.Application_IllegalArguments);
         }
 
+        ExplanationService explanationService = null;
+        for (SymmetricPair<String> key : explanationMap.keySet()) {
+            if (key.equals(pair)) {
+                if (key.equalsOrder(pair)) {
+                    explanationService = explanationMap.get(pair);
+                } else {
+                    ExplanationService tmp = explanationMap.get(pair);
+                    explanationService = new ExplanationService(tmp.getSimilarity(), tmp.getBackwardBacktraceTable(), tmp.getForwardBacktraceTable());
+                }
+            }
+        }
+
         Explanation explanation = new Explanation();
-        explanation.similarity = explanationMap.get(pair).getSimilarity();
-        explanation.forward = explanationMap.get(pair).explanationTree(ReasoningDirectionConstant.FORWARD);
-        explanation.backward = explanationMap.get(pair).explanationTree(ReasoningDirectionConstant.BACKWARD);
+        explanation.similarity = explanationService.getSimilarity();
+        explanation.forward = explanationService.explanationTree(ReasoningDirectionConstant.FORWARD);
+        explanation.backward = explanationService.explanationTree(ReasoningDirectionConstant.BACKWARD);
 
         return explanation;
     }
@@ -377,10 +389,22 @@ public class SimExplainer {
             throw new JSimPiException("Have not been calculate similarity between [" + concept1 + "] and [" + concept2 + "]  yet.", ErrorCode.Application_IllegalArguments);
         }
 
+        ExplanationService explanationService = null;
+        for (SymmetricPair<String> key : explanationMap.keySet()) {
+            if (key.equals(pair)) {
+                if (key.equalsOrder(pair)) {
+                    explanationService = explanationMap.get(pair);
+                } else {
+                    ExplanationService tmp = explanationMap.get(pair);
+                    explanationService = new ExplanationService(tmp.getSimilarity(), tmp.getBackwardBacktraceTable(), tmp.getForwardBacktraceTable());
+                }
+            }
+        }
+
         JSONObject explanation = new JSONObject();
-        explanation.put("similarity", explanationMap.get(pair).getSimilarity());
-        explanation.put("forward", explanationMap.get(pair).explanationTreeAsJson(ReasoningDirectionConstant.FORWARD));
-        explanation.put("backward", explanationMap.get(pair).explanationTreeAsJson(ReasoningDirectionConstant.BACKWARD));
+        explanation.put("similarity", explanationService.getSimilarity());
+        explanation.put("forward", explanationService.explanationTreeAsJson(ReasoningDirectionConstant.FORWARD));
+        explanation.put("backward", explanationService.explanationTreeAsJson(ReasoningDirectionConstant.BACKWARD));
 
         return explanation;
     }

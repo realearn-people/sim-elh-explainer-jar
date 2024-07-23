@@ -28,6 +28,13 @@ public class SymmetricPair<T> {
                 (Objects.equals(first, that.second) && Objects.equals(second, that.first));
     }
 
+    public boolean equalsOrder(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SymmetricPair<?> that = (SymmetricPair<?>) o;
+        return (Objects.equals(first, that.first) && Objects.equals(second, that.second));
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(first) + Objects.hash(second); // Order-independent hash code

@@ -70,4 +70,21 @@ public class TreeNode<T> {
     public String getConceptName() {
         return conceptName;
     }
+
+    public TreeNode<T> copy() {
+        // Create a new TreeNode instance with the same properties but no children yet
+        TreeNode<T> newNode = new TreeNode<>(this.conceptName, this.edgeToParent, this.data, this.id);
+
+        // Recursively copy each child and add it to the new node
+        for (TreeNode<T> child : this.children) {
+            TreeNode<T> childCopy = child.copy(); // Recursive copy
+            newNode.children.add(childCopy); // Add the copied child to the new node's children
+        }
+
+        return newNode;
+    }
+
+    public void setEdgeToParent(String edgeToParent) {
+        this.edgeToParent = edgeToParent;
+    }
 }
