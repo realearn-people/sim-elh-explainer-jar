@@ -321,7 +321,7 @@ public class SimExplainer {
             try {
                 return explanationService.treeHierarchyAsJson(concept);
             } catch (JSimPiException e) {
-                throw new JSimPiException("[" + concept + "] have not been processed yet: " + e.toString(), ErrorCode.Application_IllegalArguments);
+                // do nothing
             }
         }
 
