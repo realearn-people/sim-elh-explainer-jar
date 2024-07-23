@@ -47,6 +47,7 @@ public enum ErrorCode {
 
     // Service
     OWLSimService_IllegalArguments("OWLSimService_IllegalArguments"),
+    ExplanationConverterService_NoConfiguration("ExplanationConverterService_NoConfiguration"),
 
     // Util
     OWLConceptDefinitionUtil_IllegalArguments("OWLConceptDefinitionUtil_IllegalArguments"),

@@ -63,12 +63,12 @@ public class SimilarityService {
         }
     }
 
-    private BigDecimal computeSimilarity(IConceptUnfolder iConceptUnfolder, IReasoner iReasoner, IRoleUnfolder iRoleUnfolder, Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
+    private BigDecimal computeSimilarity(IReasoner iReasoner, IRoleUnfolder iRoleUnfolder, Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
         iReasoner.setRoleUnfoldingStrategy(iRoleUnfolder);
 
-        BigDecimal forwardDistance = iReasoner.measureDirectedSimilarity(tree1, tree2, iConceptUnfolder.getUnfoldedConceptMap());
+        BigDecimal forwardDistance = iReasoner.measureDirectedSimilarity(tree1, tree2);
         this.backtraceTable_forward = iReasoner.getBacktraceTable();
-        BigDecimal backwardDistance = iReasoner.measureDirectedSimilarity(tree2, tree1, iConceptUnfolder.getUnfoldedConceptMap());
+        BigDecimal backwardDistance = iReasoner.measureDirectedSimilarity(tree2, tree1);
         this.backtraceTable_backward = iReasoner.getBacktraceTable();
 
         return forwardDistance.add(backwardDistance).divide(TWO);
@@ -120,7 +120,7 @@ public class SimilarityService {
         Tree<Set<String>> tree1 = unfoldAndConstructTree(conceptT, conceptName1);
         Tree<Set<String>> tree2 = unfoldAndConstructTree(conceptT, conceptName2);
 
-        result = computeSimilarity(conceptT, reasonerT, roleUnfolderT, tree1, tree2);
+        result = computeSimilarity(reasonerT, roleUnfolderT, tree1, tree2);
 
         return result;
     }

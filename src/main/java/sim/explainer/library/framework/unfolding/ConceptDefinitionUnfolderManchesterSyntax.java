@@ -138,7 +138,6 @@ public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfold
         return (fullDefinition != null) ? unfold(fullDefinition) : conceptName;
     }
 
-    // New method to get the unfolded concept map
     public HashMap<String, String> getUnfoldedConceptMap() {
         return new HashMap<>(unfoldedConceptMap);
     }

@@ -1,6 +1,8 @@
 package sim.explainer.library.service;
 
 import org.json.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import sim.explainer.library.enumeration.ReasoningDirectionConstant;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 
+@Service
 public class ExplanationService {
     private BigDecimal similarity;
     private BacktraceTable forwardBacktraceTable;
@@ -70,7 +73,7 @@ public class ExplanationService {
         result.append(prefix).append(isTail ? "└── " : "├── ")
                 .append(node.getEdgeToParent() == null ? node.getConceptName() : node.getEdgeToParent()) // root concept
                 .append(" : ")
-                .append(node.getConceptDescription())
+                .append(node.getData())
                 .append("\n");
         for (int i = 0; i < node.getChildren().size() - 1; i++) {
             buildTreeAscii(node.getChildren().get(i), result, prefix + (isTail ? "    " : "│   "), false);
@@ -125,6 +128,24 @@ public class ExplanationService {
         if (node.getChildren().size() > 0) {
             buildExplanationTreeAscii(backtraceTable, node.getChildren().get(node.getChildren().size() - 1), result, prefix + (isTail ? "    " : "│   "), true, level + 1);
         }
+    }
+
+    public JSONObject explanationTreeNaturalExplanation(ReasoningDirectionConstant direction) {
+        BacktraceTable backtraceTable;
+        if (direction.equals(ReasoningDirectionConstant.FORWARD)) {
+            backtraceTable = forwardBacktraceTable;
+        } else {
+            backtraceTable = backwardBacktraceTable;
+        }
+
+        HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap = backtraceTable.getTable().get(0);
+        if (levelMap == null || levelMap.isEmpty()) {
+            return new JSONObject().put("error", "No data available at level 0.");
+        }
+
+        // Assuming there is always one root node
+        TreeNode<Set<String>> root = levelMap.keySet().iterator().next();
+        return ExplanationConverterService.convertExplanation(buildExplanationTreeAsJson(backtraceTable, root, 0));
     }
 
     public JSONObject explanationTreeAsJson(ReasoningDirectionConstant direction) {

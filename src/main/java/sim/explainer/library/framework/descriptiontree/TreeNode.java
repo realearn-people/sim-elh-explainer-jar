@@ -13,18 +13,16 @@ public class TreeNode<T> {
     private int id;
     private String edgeToParent;
     private String conceptName;
-    private String conceptDescription;
 
-    public TreeNode(String conceptName, String conceptDescription, String edgeToParent, T data, int id) {
+    public TreeNode(String conceptName, String edgeToParent, T data, int id) {
         this.edgeToParent = edgeToParent;
         this.data = data;
         this.id = id;
         this.conceptName = conceptName;
-        this.conceptDescription = conceptDescription;
     }
 
-    protected TreeNode<T> addChild(String conceptName, String conceptDescription, String edgeToParent, T node, int nodeId) {
-        TreeNode<T> child = new TreeNode<T>(conceptName, conceptDescription, edgeToParent, node, nodeId);
+    protected TreeNode<T> addChild(String conceptName, String edgeToParent, T node, int nodeId) {
+        TreeNode<T> child = new TreeNode<T>(conceptName, edgeToParent, node, nodeId);
         this.children.add(child);
 
         return child;
@@ -71,9 +69,5 @@ public class TreeNode<T> {
 
     public String getConceptName() {
         return conceptName;
-    }
-
-    public String getConceptDescription() {
-        return conceptDescription;
     }
 }

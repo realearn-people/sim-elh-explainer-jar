@@ -16,6 +16,7 @@ import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.KRSSServiceContext;
 import sim.explainer.library.framework.OWLServiceContext;
 import sim.explainer.library.framework.PreferenceProfile;
+import sim.explainer.library.service.ExplanationConverterService;
 import sim.explainer.library.service.ExplanationService;
 import sim.explainer.library.service.SimilarityService;
 import sim.explainer.library.service.ValidationService;
@@ -41,6 +42,8 @@ public class SimExplainer {
 
     private final SimilarityService similarityService = new SimilarityService(owlServiceContext, krssServiceContext, preferenceProfile);
     private final ValidationService validationService = new ValidationService(owlServiceContext, krssServiceContext);
+
+    private static ExplanationConverterService explanationConverterService = new ExplanationConverterService();
 
     private final HashMap<SymmetricPair<String>, ExplanationService> explanationMap = new HashMap<>();
 
@@ -224,6 +227,11 @@ public class SimExplainer {
 
     }
 
+    public void setDefaultRoleDiscountFactor(BigDecimal value) {
+        preferenceProfile.setDefaultRoleDiscountFactor(value);
+    }
+
+
     public void resetPreferenceProfile() {
         preferenceProfile.reset();
     }
@@ -235,9 +243,14 @@ public class SimExplainer {
         if (concept1 == null || concept2 == null) {
             throw new JSimPiException("Concept not provide", ErrorCode.Application_IllegalArguments);
         }
-
         // result variable
         BigDecimal result;
+
+        SymmetricPair<String> pair = new SymmetricPair<>(concept1, concept2);
+
+        if (explanationMap.containsKey(pair)) {
+            return explanationMap.get(pair).getSimilarity();
+        }
 
         switch (this.fileType) {
             case KRSS_FILE -> {
@@ -260,10 +273,6 @@ public class SimExplainer {
         }
 
         return result;
-    }
-
-    public void setDefaultRoleDiscountFactor(BigDecimal value) {
-        preferenceProfile.setDefaultRoleDiscountFactor(value);
     }
 
     private void addExplanationMap(String concept1, String concept2, BigDecimal similarity, BacktraceTable backtraceTable_forward, BacktraceTable backtraceTable_backward) {
@@ -345,6 +354,41 @@ public class SimExplainer {
 
     public JSONObject getExplanationAsJson(String concept1, String concept2, String outputPath) {
         JSONObject explanation = getExplanationAsJson(concept1, concept2);
+
+        try (FileWriter file = new FileWriter(outputPath)) {
+            file.write(explanation.toString(4)); // Write JSON with indentation
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Handle the exception as needed
+        }
+
+        return explanation;
+    }
+
+    public void setApiTimeout(int apiTimeout) {
+        explanationConverterService.setApiTimeout(apiTimeout);
+    }
+
+    public void setApiKey(String apiKey) {
+        explanationConverterService.setApiKey(apiKey);
+    }
+
+    public JSONObject getExplantionAsNaturalLanguage(String concept1, String concept2) {
+        JSONObject explanation = getExplanationAsJson(concept1, concept2);
+
+        JSONObject forward_explanation = ExplanationConverterService.convertExplanation(explanation.getJSONObject("forward"));
+        JSONObject backward_explanation = ExplanationConverterService.convertExplanation(explanation.getJSONObject("backward"));
+
+        JSONObject result = new JSONObject();
+        result.put("similarity", explanation.getBigDecimal("similarity"));
+        result.put("forward", forward_explanation);
+        result.put("backward", backward_explanation);
+
+        return result;
+    }
+
+    public JSONObject getExplantionAsNaturalLanguage(String concept1, String concept2, String outputPath) {
+        JSONObject explanation = getExplantionAsNaturalLanguage(concept1, concept2);
 
         try (FileWriter file = new FileWriter(outputPath)) {
             file.write(explanation.toString(4)); // Write JSON with indentation

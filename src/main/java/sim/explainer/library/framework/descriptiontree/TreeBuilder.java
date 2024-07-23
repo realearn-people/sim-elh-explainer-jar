@@ -47,7 +47,6 @@ public class TreeBuilder {
 
         TreeNode<Set<String>> child = tree.addNode(
                 MyStringUtils.mapConcepts(nestedPrimitiveStr, mapper),
-                MyStringUtils.mapConcepts(context.getConceptDescription(), mapper),
                 edge,
                 parentNode,
                 primitivesTop);
@@ -72,7 +71,6 @@ public class TreeBuilder {
 
         TreeNode<Set<String>> child = tree.addNode(
                 MyStringUtils.mapConcepts(nestedPrimitiveStr, mapper),
-                MyStringUtils.mapConcepts(context.getConceptDescription(), mapper),
                 edge,
                 parentNode,
                 primitivesTop);
@@ -107,7 +105,7 @@ public class TreeBuilder {
         Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
-        TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), MyStringUtils.mapConcepts(context.getConceptDescription(), mapper), null, null, primitivesTop);
+        TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), null, null, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 
@@ -136,7 +134,7 @@ public class TreeBuilder {
         Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
-        TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), MyStringUtils.mapConcepts(context.getConceptDescription(), mapper), null, null, primitivesTop);
+        TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), null, null, primitivesTop);
 
         for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
 

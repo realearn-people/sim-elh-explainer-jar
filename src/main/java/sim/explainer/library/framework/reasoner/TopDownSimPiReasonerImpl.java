@@ -34,8 +34,6 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
 
     protected BacktraceTable backtraceTable = new BacktraceTable();
 
-    protected HashMap<String, String> mapper;
-
     public TopDownSimPiReasonerImpl(PreferenceProfile preferenceProfile) {
         this.preferenceProfile = preferenceProfile;
     }
@@ -282,8 +280,8 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
                 // TODO - concept check
                 if (causeMaxExi2 != null) {
                     SymmetricPair<String> key = new SymmetricPair<>(
-                            MyStringUtils.generateExistential(node1Child.getEdgeToParent(), MyStringUtils.mapConcepts(node1Child.getConceptDescription(), mapper)),
-                            MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), MyStringUtils.mapConcepts(causeMaxExi2.getConceptDescription(), mapper))
+                            MyStringUtils.generateExistential(node1Child.getEdgeToParent(), node1Child.getConceptName()),
+                            MyStringUtils.generateExistential(causeMaxExi2.getEdgeToParent(), causeMaxExi2.getConceptName())
                     );
 
                     if (!node1Child.getConceptName().equals(causeMaxExi2.getConceptName())) {
@@ -418,14 +416,13 @@ public class TopDownSimPiReasonerImpl implements IReasoner {
     }
 
     @Override
-    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2, HashMap<String, String> mapper) {
+    public BigDecimal measureDirectedSimilarity(Tree<Set<String>> tree1, Tree<Set<String>> tree2) {
         if (tree1 == null || tree2 == null || preferenceProfile == null) {
             throw new JSimPiException("Unable to measure directed similarity as tree1["
                     + tree1 + "] and tree2[" + tree2 + " are null.", ErrorCode.TopDownSimPiReasonerImpl_IllegalArguments);
         }
 
         this.backtraceTable = new BacktraceTable();
-        this.mapper = mapper;
 
         TreeNode<Set<String>> rootTree1 = tree1.getNodes().get(0);
         TreeNode<Set<String>> rootTree2 = tree2.getNodes().get(0);
