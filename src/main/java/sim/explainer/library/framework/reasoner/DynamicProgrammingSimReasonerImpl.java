@@ -13,6 +13,7 @@ import sim.explainer.library.framework.descriptiontree.TreeNode;
 import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.util.TimeUtils;
+import sim.explainer.library.util.utilstructure.SymmetricPair;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -53,7 +54,7 @@ public class DynamicProgrammingSimReasonerImpl extends TopDownSimReasonerImpl {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected BigDecimal eHd(int level, SimRecord record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
+    protected BigDecimal eHd(int level, HashSet<SymmetricPair<String>> record, TreeNode<Set<String>> node1, TreeNode<Set<String>> node2) {
         if (node1 == null || node2 == null) {
             throw new JSimPiException("Unable to ehd as node1[" + node1 + "] and node2[" + node2 + "] are null.", ErrorCode.DynamicProgrammingSimReasonerImpl_IllegalArguments);
         }
