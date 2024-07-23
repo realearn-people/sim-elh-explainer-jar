@@ -377,7 +377,7 @@ public class SimExplainer {
      * @return the tree hierarchy explanation as a string
      * @throws JSimPiException if no concepts are provided
      */
-    public String treeHierachy(String... concepts) {
+    public String treeHierarchy(String... concepts) {
         if (concepts == null || concepts.length == 0) {
             throw new JSimPiException("Concept not provided", ErrorCode.Application_IllegalArguments);
         }
