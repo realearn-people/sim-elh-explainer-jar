@@ -119,13 +119,13 @@ public class ExplanationService {
         BacktraceTable backtraceTable = getBacktraceTable(direction);
         StringBuilder result = new StringBuilder();
 
-        HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap = backtraceTable.getTable().get(0);
+        HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord> levelMap = backtraceTable.getTable().get(0);
         if (levelMap == null) {
             return "No data available at level 0.";
         }
 
-        for (TreeNode<Set<String>> root : levelMap.keySet()) {
-            buildExplanationTreeAscii(backtraceTable, root, result, "", true, 0);
+        for (SymmetricPair<TreeNode<Set<String>>> rootPair : levelMap.keySet()) {
+            buildExplanationTreeAscii(backtraceTable, rootPair.getFirst(), result, "", true, 0);
         }
 
         return result.toString();
@@ -136,7 +136,16 @@ public class ExplanationService {
             return;
         }
 
-        TreeNode<Set<String>> comparingNode = backtraceTable.getTable().get(level).get(node).keySet().iterator().next();
+        SymmetricPair<TreeNode<Set<String>>> pair = backtraceTable.getTable().get(level).keySet().stream()
+                .filter(p -> p.getFirst().equals(node) || p.getSecond().equals(node))
+                .findFirst().orElse(null);
+
+        if (pair == null) {
+            return;
+        }
+
+        TreeNode<Set<String>> comparingNode = pair.getFirst().equals(node) ? pair.getSecond() : pair.getFirst();
+        SimRecord simRecord = backtraceTable.getTable().get(level).get(pair);
 
         result.append(prefix).append(isTail ? "└── " : "├── ")
                 .append("[")
@@ -144,7 +153,7 @@ public class ExplanationService {
                 .append("] : [")
                 .append(comparingNode.getConceptName())
                 .append("] - ")
-                .append(backtraceTable.getTable().get(level).get(node).get(comparingNode))
+                .append(simRecord)
                 .append("\n");
         for (int i = 0; i < node.getChildren().size() - 1; i++) {
             buildExplanationTreeAscii(backtraceTable, node.getChildren().get(i), result, prefix + (isTail ? "    " : "│   "), false, level + 1);
@@ -163,12 +172,12 @@ public class ExplanationService {
     public JSONObject explanationTreeNaturalExplanation(ReasoningDirectionConstant direction) {
         BacktraceTable backtraceTable = getBacktraceTable(direction);
 
-        HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap = backtraceTable.getTable().get(0);
+        HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord> levelMap = backtraceTable.getTable().get(0);
         if (levelMap == null || levelMap.isEmpty()) {
             return new JSONObject().put("error", "No data available at level 0.");
         }
 
-        TreeNode<Set<String>> root = levelMap.keySet().iterator().next();
+        TreeNode<Set<String>> root = levelMap.keySet().iterator().next().getFirst();
         return ExplanationConverterService.convertExplanationWholeTree(buildExplanationTreeAsJson(backtraceTable, root, 0));
     }
 
@@ -181,12 +190,12 @@ public class ExplanationService {
     public JSONObject explanationTreeAsJson(ReasoningDirectionConstant direction) {
         BacktraceTable backtraceTable = getBacktraceTable(direction);
 
-        HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap = backtraceTable.getTable().get(0);
+        HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord> levelMap = backtraceTable.getTable().get(0);
         if (levelMap == null || levelMap.isEmpty()) {
             return new JSONObject().put("error", "No data available at level 0.");
         }
 
-        TreeNode<Set<String>> root = levelMap.keySet().iterator().next();
+        TreeNode<Set<String>> root = levelMap.keySet().iterator().next().getFirst();
         return buildExplanationTreeAsJson(backtraceTable, root, 0);
     }
 
@@ -195,8 +204,16 @@ public class ExplanationService {
             return null;
         }
 
-        TreeNode<Set<String>> comparingNode = backtraceTable.getTable().get(level).get(node).keySet().iterator().next();
-        SimRecord simRecord = backtraceTable.getTable().get(level).get(node).get(comparingNode);
+        SymmetricPair<TreeNode<Set<String>>> pair = backtraceTable.getTable().get(level).keySet().stream()
+                .filter(p -> p.getFirst().equals(node) || p.getSecond().equals(node))
+                .findFirst().orElse(null);
+
+        if (pair == null) {
+            return null;
+        }
+
+        TreeNode<Set<String>> comparingNode = pair.getFirst().equals(node) ? pair.getSecond() : pair.getFirst();
+        SimRecord simRecord = backtraceTable.getTable().get(level).get(pair);
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("comparingConcept1", node.getConceptName());
@@ -248,10 +265,10 @@ public class ExplanationService {
     private TreeNode<Set<String>> findRootNode(String concept) {
         TreeNode<Set<String>> root = null;
 
-        for (HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap : forwardBacktraceTable.getTable().values()) {
-            for (TreeNode<Set<String>> treeNode : levelMap.keySet()) {
-                if (treeNode.getConceptName().equals(concept)) {
-                    root = treeNode;
+        for (HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord> levelMap : forwardBacktraceTable.getTable().values()) {
+            for (SymmetricPair<TreeNode<Set<String>>> pair : levelMap.keySet()) {
+                if (pair.getFirst().getConceptName().equals(concept) || pair.getSecond().getConceptName().equals(concept)) {
+                    root = pair.getFirst().getConceptName().equals(concept) ? pair.getFirst() : pair.getSecond();
                     break;
                 }
             }
@@ -261,10 +278,10 @@ public class ExplanationService {
         }
 
         if (root == null) {
-            for (HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>> levelMap : backwardBacktraceTable.getTable().values()) {
-                for (TreeNode<Set<String>> treeNode : levelMap.keySet()) {
-                    if (treeNode.getConceptName().equals(concept)) {
-                        root = treeNode;
+            for (HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord> levelMap : backwardBacktraceTable.getTable().values()) {
+                for (SymmetricPair<TreeNode<Set<String>>> pair : levelMap.keySet()) {
+                    if (pair.getFirst().getConceptName().equals(concept) || pair.getSecond().getConceptName().equals(concept)) {
+                        root = pair.getFirst().getConceptName().equals(concept) ? pair.getFirst() : pair.getSecond();
                         break;
                     }
                 }

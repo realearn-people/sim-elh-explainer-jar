@@ -1,6 +1,8 @@
 package sim.explainer.library.framework.explainer;
 
 import sim.explainer.library.framework.descriptiontree.TreeNode;
+import sim.explainer.library.util.utilstructure.SymmetricPair;
+
 import java.util.HashMap;
 import java.util.Set;
 
@@ -9,7 +11,7 @@ import java.util.Set;
  */
 public class BacktraceTable {
 
-    private final HashMap<Integer, HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>>> table = new HashMap<>();
+    private final HashMap<Integer, HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord>> table = new HashMap<>();
 
     /**
      * Constructs an empty {@code BacktraceTable}.
@@ -25,9 +27,9 @@ public class BacktraceTable {
      * @param record the similarity record to add
      */
     public void addRecord(int level, TreeNode<Set<String>> treeNode1, TreeNode<Set<String>> treeNode2, SimRecord record) {
+        SymmetricPair<TreeNode<Set<String>>> pair = new SymmetricPair<>(treeNode1, treeNode2);
         table.computeIfAbsent(level, k -> new HashMap<>())
-                .computeIfAbsent(treeNode1, k -> new HashMap<>())
-                .merge(treeNode2, record, (existingRecord, newRecord) ->
+                .merge(pair, record, (existingRecord, newRecord) ->
                         existingRecord.getDeg().compareTo(newRecord.getDeg()) <= 0 ? newRecord : existingRecord);
     }
 
@@ -36,7 +38,7 @@ public class BacktraceTable {
      *
      * @return the backtrace table
      */
-    public HashMap<Integer, HashMap<TreeNode<Set<String>>, HashMap<TreeNode<Set<String>>, SimRecord>>> getTable() {
+    public HashMap<Integer, HashMap<SymmetricPair<TreeNode<Set<String>>>, SimRecord>> getTable() {
         return table;
     }
 }
