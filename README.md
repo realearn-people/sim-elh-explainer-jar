@@ -308,15 +308,9 @@ The ASCII format is a human-readable representation of the Explanation Tree. It 
 
 ---
 
-## Authors and Contacts (Alphabetical Order)
-- Chaphowasit Mahayossanan (Mahidol University, Thailand)
-   - Email: chaphowasit.mah@student.mahidol.edu
-- Teerapat Phopit (Mahidol University, Thailand)
-   - Email: teerapat.pho@student.mahidol.edu
-- Teeradaj Racharak (JAIST, Japan)
-   - Email: racharak@jaist.ac.jp
-- Kiattiphum Suwanarsa (Mahidol University, Thailand)
-   - Email: kiattiphum.intern@gmail.com
+## Principal Investigator
+- Teeradaj Racharak (Tohoku University, Japan)
+   - Email: racharak@tohoku.ac.jp
 
 
 ---
